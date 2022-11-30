@@ -1,0 +1,20 @@
+{
+  "type": "module",
+  "name": "aoc2022",
+  "version": "1.0.0",
+  "description": "The most wonderful time of the year",
+  "main": "index.js",
+  "scripts": {
+    "day": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cmaulany/aoc2022.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cmaulany/aoc2022/issues"
+  },
+  "homepage": "https://github.com/cmaulany/aoc2022#readme"
+}
