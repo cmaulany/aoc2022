@@ -18,13 +18,10 @@ const options = {
 function getOutcome(round) {
     const { you, opponent } = round;
 
-    const hasWon = options[you].beats === opponent;
-    const hasLost = options[opponent].beats === you;
-
-    if (hasWon) {
+    if (options[you].beats === opponent) {
         return 'Win';
     }
-    else if (hasLost) {
+    else if (options[opponent].beats === you) {
         return 'Lose';
     }
     return 'Draw';
@@ -38,10 +35,7 @@ function getScore(round) {
     }[getOutcome(round)];
 
     const handScore = options[round.you].score;
-
-    const score = outcomeScore + handScore;
-
-    return score;
+    return outcomeScore + handScore;
 }
 
 function getHand(oponent, desiredOutcome) {
@@ -69,24 +63,18 @@ export default function day2() {
 
     const guide = input.split('\n').map((line) => line.split(' '));
 
-    const roundsPart1 = guide.map(([left, right]) => {
-        const opponent = {
+    const roundsPart1 = guide.map(([left, right]) => ({
+        opponent: {
             A: 'Rock',
             B: 'Paper',
             C: 'Scissors',
-        }[left];
-
-        const you = {
+        }[left],
+        you: {
             X: 'Rock',
             Y: 'Paper',
             Z: 'Scissors'
-        }[right];
-
-        return {
-            opponent,
-            you
-        };
-    });
+        }[right]
+    }));
 
     const roundsPart2 = guide.map(([left, right]) => {
         const opponent = {
