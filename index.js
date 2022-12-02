@@ -1,12 +1,14 @@
-import day1 from "./day1/index.js";
+import day1 from './day1/index.js';
+import day2 from './day2/index.js';
 
 const dayArg = process.argv[2];
 if (dayArg === undefined) {
-    throw new Error("Usage: npm run day <day number>.");
+    throw new Error('Usage: npm run day <day number>.');
 }
 
 const day = {
-    '1': day1
+    '1': day1,
+    '2': day2
 }[dayArg];
 
 if (!day) {
