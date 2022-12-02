@@ -1,144 +1,116 @@
 import { readFileSync } from 'fs';
 
-const options2 = {
-    A: {
-        name: 'Rock',
-        beats: 'Z',
-        score: 1,
-    },
-    B: {
-        name: 'Paper',
-        beats: 'X',
-        score: 2,
-    },
-    C: {
-        name: 'Scissor',
-        beats: 'Y',
-        score: 3
-    },
-    X: {
-        name: 'Rock',
-        beats: 'C',
-        score: 1,
-    },
-    Y: {
-        name: 'Paper',
-        beats: 'A',
-        score: 2,
-    },
-    Z: {
-        name: 'Scissor',
-        beats: 'B',
-        score: 3
-    }
-}
-
 const options = {
-    A: {
-        name: 'Rock',
-        beats: 'Z',
+    Rock: {
+        beats: 'Scissors',
         score: 1,
     },
-    B: {
-        name: 'Paper',
-        beats: 'X',
+    Paper: {
+        beats: 'Rock',
         score: 2,
     },
-    C: {
-        name: 'Scissors',
-        beats: 'Y',
-        score: 3
-    },
-    X: {
-        name: 'Rock',
-        beats: 'C',
-        score: 1,
-    },
-    Y: {
-        name: 'Paper',
-        beats: 'A',
-        score: 2,
-    },
-    Z: {
-        name: 'Scissors',
-        beats: 'B',
+    Scissors: {
+        beats: 'Paper',
         score: 3
     }
-}
+};
 
-// X: Lose,
-// Y: Draw
-// Z: Win
+function getOutcome(round) {
+    const { you, opponent } = round;
 
-function getScore2(round) {
-    const hasWon = options[round.you].beats === round.opponent;
-    const hasLost = options[round.opponent].beats === round.you;
+    const hasWon = options[you].beats === opponent;
+    const hasLost = options[opponent].beats === you;
 
-
-    let outcomeScore;
     if (hasWon) {
-        outcomeScore = 6;
+        return 'Win';
     }
     else if (hasLost) {
-        outcomeScore = 0;
+        return 'Lose';
     }
-    else {
-        outcomeScore = 3;
-    }
+    return 'Draw';
+}
 
-    const score = outcomeScore + options[round.you].score;
-    console.log(round, hasWon, hasLost, options[round.you], score);
+function getScore(round) {
+    const outcomeScore = {
+        Win: 6,
+        Lose: 0,
+        Draw: 3
+    }[getOutcome(round)];
+
+    const handScore = options[round.you].score;
+
+    const score = outcomeScore + handScore;
 
     return score;
 }
 
-const handMap = {
-    'A': {
-        'Win': 'Y',
-        'Draw': 'X',
-        'Lose': 'Z'
-    },
-    'B': {
-        'Win': 'Z',
-        'Draw': 'Y',
-        'Lose': 'X'
-    },
-    'C': {
-        'Win': 'X',
-        'Draw': 'Z',
-        'Lose': 'Y'
-    }
-}
-
-function getScore(round) {
-    const desiredOutcome =
-        round.you === 'X' ?
-            'Lose' :
-            round.you === 'Y' ?
-                'Draw' :
-                'Win';
-    const newRound = {
-        ...round,
-        you: handMap[round.opponent][desiredOutcome]
-    }
-
-    return getScore2(newRound);
+function getHand(oponent, desiredOutcome) {
+    return {
+        Rock: {
+            Win: 'Paper',
+            Draw: 'Rock',
+            Lose: 'Scissors'
+        },
+        Paper: {
+            Win: 'Scissors',
+            Draw: 'Paper',
+            Lose: 'Rock'
+        },
+        Scissors: {
+            Win: 'Rock',
+            Draw: 'Scissors',
+            Lose: 'Paper'
+        }
+    }[oponent][desiredOutcome];
 }
 
 export default function day2() {
     const input = readFileSync('./day2/input.txt', { encoding: 'utf8' });
 
-    const rounds = input.split('\n').map((line) => {
-        const [opponent, you] = line.split(' ');
+    const guide = input.split('\n').map((line) => line.split(' '));
+
+    const roundsPart1 = guide.map(([left, right]) => {
+        const opponent = {
+            A: 'Rock',
+            B: 'Paper',
+            C: 'Scissors',
+        }[left];
+
+        const you = {
+            X: 'Rock',
+            Y: 'Paper',
+            Z: 'Scissors'
+        }[right];
+
         return {
             opponent,
             you
         };
-    })
+    });
 
-    console.log(rounds);
+    const roundsPart2 = guide.map(([left, right]) => {
+        const opponent = {
+            A: 'Rock',
+            B: 'Paper',
+            C: 'Scissors',
+        }[left];
 
-    const finalScore = rounds.map(getScore).reduce((sum, score) => sum + score);
+        const desiredOutcome = {
+            X: 'Lose',
+            Y: 'Draw',
+            Z: 'Win'
+        }[right];
+        const you = getHand(opponent, desiredOutcome);
 
-    console.log(finalScore);
+        return {
+            opponent,
+            you
+        };
+    });
+
+    const finalScorePart1 = roundsPart1.map(getScore).reduce((sum, score) => sum + score);
+    const finalScorePart2 = roundsPart2.map(getScore).reduce((sum, score) => sum + score);
+
+    console.log(`Answer part 1: ${finalScorePart1}`);
+    console.log(`Answer part 2: ${finalScorePart2}`);
 }

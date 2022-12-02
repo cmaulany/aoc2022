@@ -10,7 +10,7 @@ export default function day1() {
     const elfSums = elves.map(sum).sort((a, b) => a < b ? 1 : -1);
     
     const maxElfSum = elfSums[0];
-    const topThreeElvesSum = sum(elfSums.slice(0 ,3));
+    const topThreeElvesSum = sum(elfSums.slice(0, 3));
 
     console.log(`Answer part 1: ${maxElfSum}`);
     console.log(`Answer part 2: ${topThreeElvesSum}`);
