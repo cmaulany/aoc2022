@@ -2,15 +2,7 @@ import { readFileSync } from 'fs';
 
 function findMisplacedItem(rucksack) {
     const [compartmentA, compartmentB] = rucksack;
-    return compartmentA.find((c) => compartmentB.includes(c));
-}
-
-function getPriority(item) {
-    if (item.toLowerCase() === item) {
-        return item.charCodeAt(0) - 'a'.charCodeAt(0) + 1;
-    } else {
-        return item.charCodeAt(0) - 'A'.charCodeAt(0) + 27;
-    }
+    return compartmentA.find((item) => compartmentB.includes(item));
 }
 
 function findBadge(group) {
@@ -24,6 +16,14 @@ function findBadge(group) {
     });
     const badge = Object.entries(counts).find(([_, count]) => count === 3)[0];
     return badge;
+}
+
+function getPriority(item) {
+    if (item.toLowerCase() === item) {
+        return item.charCodeAt(0) - 'a'.charCodeAt(0) + 1;
+    } else {
+        return item.charCodeAt(0) - 'A'.charCodeAt(0) + 27;
+    }
 }
 
 function getPrioritySum(items) {
