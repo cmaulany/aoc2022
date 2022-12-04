@@ -14,16 +14,12 @@ export default function day4() {
     const input = readFileSync('./day4/input.txt', { encoding: 'utf8' });
 
     const pairs = input.split('\n').map((line) => {
-        const [startA, endA, startB, endB] = line.match(/^(\d+)-(\d+),(\d+)-(\d+)$/).slice(1).map(Number);
+        const [startA, endA, startB, endB] =
+            line.match(/^(\d+)-(\d+),(\d+)-(\d+)$/).slice(1).map(Number);
+
         return [
-            {
-                start: startA,
-                end: endA,
-            },
-            {
-                start: startB,
-                end: endB
-            }
+            { start: startA, end: endA },
+            { start: startB, end: endB },
         ];
     });
 
