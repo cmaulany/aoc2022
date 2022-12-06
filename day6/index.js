@@ -1,20 +1,20 @@
 import { readFileSync } from 'fs';
 
-const increment = (state) => ({
-    ...state,
-    index: state.index + 1
-});
-
 function isMarker(state, size) {
     const { data, index } = state;
     const uniqueCharacters = new Set(data.slice(index, index + size));
     return uniqueCharacters.size === size;
 }
 
+const incrementIndex = (state) => ({
+    ...state,
+    index: state.index + 1
+});
+
 function findMarker(data, size) {
     let state = { data, index: 0 };
     while (!isMarker(state, size)) {
-        state = increment(state);
+        state = incrementIndex(state);
     }
     return state.index + size;
 }
