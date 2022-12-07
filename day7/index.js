@@ -1,4 +1,3 @@
-import { dir } from 'console';
 import { readFileSync } from 'fs';
 
 function reduceCommand(state) {
