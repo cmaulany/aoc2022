@@ -106,17 +106,17 @@ function calculateSize(fileSystem) {
     };
 }
 
-function getDirectoriesSmallerThan(fileSystem, size) {
+function getDirectoriesWhere(fileSystem, comparator) {
     if (fileSystem.type === "file") {
         return [];
     }
 
     const childDirectories = Object.values(fileSystem.children ?? {}).reduce(
-        (agg, child) => [...agg, ...getDirectoriesSmallerThan(child, size)],
+        (agg, child) => [...agg, ...getDirectoriesWhere(child, comparator)],
         []
     );
 
-    if (fileSystem.size > size) {
+    if (!comparator(fileSystem)) {
         return childDirectories;
     }
 
@@ -146,10 +146,17 @@ export default function day7() {
     s = calculateSize(s[1].fileSystem);
 
     console.log(JSON.stringify(s));
-    const result = getDirectoriesSmallerThan(s, 100_000);
+    const result = getDirectoriesWhere(s, (dir) => dir.size <= 100_000);
     const r = result.reduce((sum, dir) => sum + dir.size, 0);
 
     // const total = calculateSize(s[1].fileSystem);
     console.log(result.map((dir) => dir.size).filter((size) => size <= 100_000 && size > 0));
     console.log(r);
+
+    const requiredSpace = (70_000_000 - 30_000_000 - s.size) * -1;
+    console.log("RR", requiredSpace);
+
+    const result2 = getDirectoriesWhere(s, (dir) => dir.size >= requiredSpace);
+    const smallest = result2.reduce((min, dir) => dir.size < min.size ? dir : min);
+    console.log(smallest);
 }
