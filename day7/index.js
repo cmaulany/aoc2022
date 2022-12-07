@@ -15,10 +15,12 @@ function parseCommand([lines, state]) {
             if (arg === '/') {
                 newPath = '/';
             } else if (arg === '..') {
-                newPath = state.path.match(/((\w+\/)+)(\w+\/)/)[0];
+                const index = state.path.match(/\w+\/$/).index
+                newPath = state.path.slice(0, index);
             } else {
                 newPath = state.path + arg + '/'
             }
+            console.log(arg, state.path, newPath);
             newState = { ...state, path: newPath };
             newLines = tail;
             break;
@@ -114,9 +116,9 @@ function getDirectoriesSmallerThan(fileSystem, size) {
         []
     );
 
-    // if (fileSystem.size > size) {
-    //     return childDirectories;
-    // }
+    if (fileSystem.size > size) {
+        return childDirectories;
+    }
 
     return [
         fileSystem,
