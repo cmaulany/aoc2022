@@ -1,87 +1,69 @@
+import { dir } from 'console';
 import { readFileSync } from 'fs';
 
-function parseCommand([lines, state]) {
+function reduceCommand(state) {
+    const { lines, path, fileSystem } = state;
+
     const [head, ...tail] = lines;
     const [dollarSign, cmd, arg] = head;
+
     if (dollarSign !== '$') {
         throw 'Expected \'$\'';
     }
 
-    let newState;
-    let newLines;
     switch (cmd) {
         case 'cd':
-            let newPath;
-            if (arg === '/') {
-                newPath = '/';
-            } else if (arg === '..') {
-                const index = state.path.match(/\w+\/$/).index
-                newPath = state.path.slice(0, index);
-            } else {
-                newPath = state.path + arg + '/'
-            }
-            console.log(arg, state.path, newPath);
-            newState = { ...state, path: newPath };
-            newLines = tail;
-            break;
+            return {
+                ...state,
+                path: changeDirectory(path, arg),
+                lines: tail
+            };
         case 'ls':
-            let endIndex = tail.findIndex(([firstSymbol]) => firstSymbol === '$');
-            if (endIndex === -1) {
-                endIndex = tail.length;
-            }
-            newState = tail.slice(0, endIndex).reduce((state, line) => {
+            const findIndex = tail.findIndex(([firstSymbol]) => firstSymbol === '$');
+            const endIndex = findIndex >= 0 ? findIndex : tail.length;
+
+            const newFileSystem = tail.slice(0, endIndex).reduce((fileSystem, line) => {
                 const [firstSymbol, name] = line;
-                if (firstSymbol === 'dir') {
-                    return {
-                        ...state,
-                        fileSystem: addDirectory(state.fileSystem, state.path + name + '/')
-                    };
-                }
-                return {
-                    ...state,
-                    fileSystem: addFile(state.fileSystem, state.path + name + '/', Number(firstSymbol))
-                };
-            }, state);
-            newLines = tail.slice(endIndex);
-            break;
-    }
-    return [newLines, newState];
-}
 
-function addDirectory(fileSystem, path) {
-    if (!path || path === '/') {
-        return fileSystem ?? {
-            type: 'dir',
-            children: {}
-        };
-    }
+                const entity =
+                    firstSymbol === 'dir' ?
+                        { type: 'dir', children: {} } :
+                        { type: 'file', size: Number(firstSymbol) };
 
-    const [name, rest] = path.match(/\/(\w+)(.*)/)?.slice(1);
+                return add(fileSystem, path + name + '/', entity);
+            }, fileSystem);
 
-    return {
-        ...fileSystem,
-        children: {
-            ...fileSystem?.children,
-            [name]: addDirectory(fileSystem?.children[name], rest),
-        }
+            return {
+                ...state,
+                lines: tail.slice(endIndex),
+                fileSystem: newFileSystem
+            };
     }
 }
 
-function addFile(fileSystem, path, size) {
-    if (!path || path === '/') {
-        return fileSystem ?? {
-            type: 'file',
-            size,
-            children: {}
-        };
+function changeDirectory(path, arg) {
+    if (arg === '/') {
+        return '/';
+    } else if (arg === '..') {
+        const index = path.match(/\w+\/$/).index
+        return path.slice(0, index);
+    } else {
+        return path + arg + '/'
     }
+}
+
+function add(fileSystem, path, entity) {
+    if (path === '/') {
+        return entity;
+    }
+
     const [name, rest] = path.match(/\/([\w\.]+)(.*)/)?.slice(1);
 
     return {
         ...fileSystem,
         children: {
             ...fileSystem?.children,
-            [name]: addFile(fileSystem?.children[name], rest, size),
+            [name]: add(fileSystem?.children[name], rest, entity),
         }
     }
 }
@@ -132,6 +114,7 @@ export default function day7() {
     const lines = input.split(/\r?\n/).map((line) => line.split(' '));
 
     const initialState = {
+        lines,
         path: '/',
         fileSystem: {
             type: 'dir',
@@ -139,24 +122,18 @@ export default function day7() {
         },
     };
 
-    let s = [lines, initialState];
-    while (s[0].length > 0) {
-        s = parseCommand(s);
+    let state = initialState;
+    while (state.lines.length > 0) {
+        state = reduceCommand(state);
     }
-    s = calculateSize(s[1].fileSystem);
+    const fileSystem = calculateSize(state.fileSystem);
 
-    console.log(JSON.stringify(s));
-    const result = getDirectoriesWhere(s, (dir) => dir.size <= 100_000);
-    const r = result.reduce((sum, dir) => sum + dir.size, 0);
+    const directoriesSmallerThan100k = getDirectoriesWhere(fileSystem, (dir) => dir.size <= 100_000);
+    const summedDirectories = directoriesSmallerThan100k.reduce((sum, dir) => sum + dir.size, 0);
+    console.log(`Answer part 1: ${summedDirectories}`);
 
-    // const total = calculateSize(s[1].fileSystem);
-    console.log(result.map((dir) => dir.size).filter((size) => size <= 100_000 && size > 0));
-    console.log(r);
-
-    const requiredSpace = (70_000_000 - 30_000_000 - s.size) * -1;
-    console.log("RR", requiredSpace);
-
-    const result2 = getDirectoriesWhere(s, (dir) => dir.size >= requiredSpace);
-    const smallest = result2.reduce((min, dir) => dir.size < min.size ? dir : min);
-    console.log(smallest);
+    const additionalRequiredSpace = 30_000_000 - 70_000_000 + fileSystem.size;
+    const consideredDirectories = getDirectoriesWhere(fileSystem, (dir) => dir.size >= additionalRequiredSpace);
+    const smallestDirectory = consideredDirectories.reduce((min, dir) => dir.size < min.size ? dir : min);
+    console.log(`Answer part 2: ${smallestDirectory.size}`);
 }
