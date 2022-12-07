@@ -68,15 +68,15 @@ function add(fileSystem, path, entity) {
 }
 
 function calculateSize(fileSystem) {
-    const { type, children = {} } = fileSystem;
+    const { type, children } = fileSystem;
     if (type === 'file') {
         return fileSystem;
     }
 
-    const newChildren = Object.entries(children).reduce((newChildren, [key, value]) => {
-        newChildren[key] = calculateSize(value);
-        return newChildren;
-    }, {});
+    const newChildren = Object.entries(children).reduce((newChildren, [key, value]) => ({
+        ...newChildren,
+        [key]: calculateSize(value)
+    }), {});
 
     const size = Object.values(newChildren).reduce((sum, child) => sum + child.size, 0);
 
