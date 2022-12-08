@@ -44,10 +44,10 @@ function changeDirectory(path, arg) {
     if (arg === '/') {
         return '/';
     } else if (arg === '..') {
-        const index = path.match(/\w+\/$/).index
+        const index = path.match(/\w+\/$/).index;
         return path.slice(0, index);
     } else {
-        return path + arg + '/'
+        return path + arg + '/';
     }
 }
 
@@ -64,7 +64,7 @@ function add(fileSystem, path, entity) {
             ...fileSystem?.children,
             [name]: add(fileSystem?.children[name], rest, entity),
         }
-    }
+    };
 }
 
 function calculateSize(fileSystem) {
