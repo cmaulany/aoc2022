@@ -1,6 +1,18 @@
 import { readFileSync } from 'fs';
 
 function viewingDistance(trees, position, direction) {
+    if (
+        (direction === 'up' && position.y <= 0) ||
+        (direction === 'down' && position.y >= trees.length - 1) ||
+        (direction === 'left' && position.x <= 0) ||
+        (direction === 'right' && position.x >= trees[0].length - 1)
+    ) {
+        return {
+            distance: 0,
+            isInfinite: true
+        };
+    }
+
     const delta = {
         up: { x: 0, y: -1 },
         right: { x: 1, y: 0 },
@@ -51,9 +63,9 @@ export default function day8() {
             const position = { x, y };
             visibilityMap[y][x] =
                 viewingDistance(trees, position, 'up').isInfinite ||
-                viewingDistance(trees, position, 'right').isInfinite ||
                 viewingDistance(trees, position, 'down').isInfinite ||
-                viewingDistance(trees, position, 'left').isInfinite;
+                viewingDistance(trees, position, 'left').isInfinite ||
+                viewingDistance(trees, position, 'right').isInfinite;
         }
     }
 
@@ -67,9 +79,9 @@ export default function day8() {
             const position = { x, y };
             scenicScoreMap[y][x] =
                 viewingDistance(trees, position, 'up').distance *
-                viewingDistance(trees, position, 'right').distance *
                 viewingDistance(trees, position, 'down').distance *
-                viewingDistance(trees, position, 'left').distance;
+                viewingDistance(trees, position, 'left').distance *
+                viewingDistance(trees, position, 'right').distance;
         }
     }
 
