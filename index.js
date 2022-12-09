@@ -6,6 +6,7 @@ import day5 from './day5/index.js';
 import day6 from './day6/index.js';
 import day7 from './day7/index.js';
 import day8 from './day8/index.js';
+import day9 from './day9/index.js';
 
 const dayArg = process.argv[2];
 if (dayArg === undefined) {
@@ -21,6 +22,7 @@ const day = {
     '6': day6,
     '7': day7,
     '8': day8,
+    '9': day9,
 }[dayArg];
 
 if (!day) {
