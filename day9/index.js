@@ -9,7 +9,7 @@ function add(a, b) {
 
 function move(state, move) {
     const { direction, distance } = move;
-    const { visited, head, tail } = state;
+    const { visited, rope } = state;
 
     const delta = {
         'U': { x: 0, y: -1 },
@@ -18,35 +18,34 @@ function move(state, move) {
         'L': { x: -1, y: 0 }
     }[direction];
 
-    let h = head;
-    let t = tail;
+    let newRope = rope;
     for (let i = 0; i < distance; i++) {
-        console.log(i, h, t);
-        h = add(h, delta);
-        // const check = Math.abs(h.x - t.x) > 1 ||
-        //     Math.abs(h.y - t.y) > 1;
-        if (
-            Math.abs(h.x - t.x) > 1 ||
-            Math.abs(h.y - t.y) > 1
-        ) {
-            console.log("moving", Math.sign(h.x - t.x), Math.sign(h.y - t.y))
-            t = add(
-                t,
-                {
-                    x: Math.sign(h.x - t.x),
-                    y: Math.sign(h.y - t.y),
-                }
-            );
-            const key = `${t.x},${t.y}`;
-            visited[key] ??= 0;
-            visited[key]++;
-        }
+        newRope[0] = add(newRope[0], delta);
+        for (let j = 1; j < newRope.length; j++) {
+            const current = newRope[j];
+            const previous = newRope[j - 1];
 
+            const dx = previous.x - current.x;
+            const dy = previous.y - current.y;
+            if (
+                Math.abs(dx) > 1 ||
+                Math.abs(dy) > 1
+            ) {
+                newRope[j] = add(
+                    current,
+                    {
+                        x: Math.sign(dx),
+                        y: Math.sign(dy),
+                    }
+                );
+            }
+        }
+        const tail = newRope[newRope.length - 1];
+        visited[`${tail.x},${tail.y}`] = true;
     }
 
     return {
-        head: h,
-        tail: t,
+        rope: newRope,
         visited,
     };
 }
@@ -62,15 +61,17 @@ export default function day9() {
         };
     });
 
-    const initialState = {
-        head: { x: 0, y: 0 },
-        tail: { x: 0, y: 0 },
-        visited: { '0,0': 1 },
-    };
+    const initializeState = (ropeLength) => ({
+        rope: Array.from({ length: ropeLength }).map(() => ({ x: 0, y: 0 })),
+        visited: { '0,0': true },
+    });
 
-    console.log(moves);
-    const finalState = moves.reduce(move, initialState);
-    console.log(finalState);
+    const finalStateLength2 = moves.reduce(move, initializeState(2));
+    const finalStateLength10 = moves.reduce(move, initializeState(10));
 
-    console.log(Object.keys(finalState.visited).length);
+    const visitedPositionsLength2 = Object.keys(finalStateLength2.visited).length;
+    const visitedPositionsLength10 = Object.keys(finalStateLength10.visited).length;
+
+    console.log(`Answer part 1: ${visitedPositionsLength2}`);
+    console.log(`Answer part 2: ${visitedPositionsLength10}`);
 }
