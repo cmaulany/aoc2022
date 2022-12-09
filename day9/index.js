@@ -1,45 +1,13 @@
 import { readFileSync } from 'fs';
 
-function add(a, b) {
-    return {
-        x: a.x + b.x,
-        y: a.y + b.y,
-    };
-}
-
 function move(state, move) {
     const { direction, distance } = move;
     const { visited, rope } = state;
 
-    const delta = {
-        'U': { x: 0, y: -1 },
-        'R': { x: 1, y: 0 },
-        'D': { x: 0, y: 1 },
-        'L': { x: -1, y: 0 }
-    }[direction];
-
     let newRope = rope;
     for (let i = 0; i < distance; i++) {
-        newRope[0] = add(newRope[0], delta);
-        for (let j = 1; j < newRope.length; j++) {
-            const current = newRope[j];
-            const previous = newRope[j - 1];
+        newRope = moveRope(newRope, direction);
 
-            const dx = previous.x - current.x;
-            const dy = previous.y - current.y;
-            if (
-                Math.abs(dx) > 1 ||
-                Math.abs(dy) > 1
-            ) {
-                newRope[j] = add(
-                    current,
-                    {
-                        x: Math.sign(dx),
-                        y: Math.sign(dy),
-                    }
-                );
-            }
-        }
         const tail = newRope[newRope.length - 1];
         visited[`${tail.x},${tail.y}`] = true;
     }
@@ -48,6 +16,42 @@ function move(state, move) {
         rope: newRope,
         visited,
     };
+}
+
+function moveRope(rope, direction) {
+    const newRope = rope.slice();
+
+    const delta = {
+        'U': { x: 0, y: -1 },
+        'R': { x: 1, y: 0 },
+        'D': { x: 0, y: 1 },
+        'L': { x: -1, y: 0 }
+    }[direction];
+
+    const head = newRope[0];
+    newRope[0] = {
+        x: head.x + delta.x,
+        y: head.y + delta.y
+    };
+
+    for (let i = 1; i < newRope.length; i++) {
+        const current = newRope[i];
+        const previous = newRope[i - 1];
+
+        const dx = previous.x - current.x;
+        const dy = previous.y - current.y;
+        if (
+            Math.abs(dx) > 1 ||
+            Math.abs(dy) > 1
+        ) {
+            newRope[i] = {
+                x: current.x + Math.sign(dx),
+                y: current.y + Math.sign(dy),
+            }
+        }
+    }
+
+    return newRope;
 }
 
 export default function day9() {
