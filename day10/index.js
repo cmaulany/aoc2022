@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 
-function executeCommand(states, command) {
+function reduceCommand(states, command) {
     const [state] = states;
 
     const { instruction, value } = command;
@@ -30,6 +30,18 @@ function executeCommand(states, command) {
     }
 }
 
+function render(states, width) {
+    const pixels = states.reverse().map((state, i) => {
+        const pixelPosition = i % width;
+        const isLit = Math.abs(state.x - pixelPosition) <= 1;
+        return isLit ? '#' : '.';
+    });
+
+    for (let i = 0; i < pixels.length; i += width) {
+        console.log(pixels.slice(i, i + width).join(''));
+    }
+}
+
 export default function day10() {
     const input = readFileSync('./day10/input.txt', { encoding: 'utf8' });
 
@@ -46,7 +58,7 @@ export default function day10() {
         x: 1
     };
 
-    const states = program.reduce(executeCommand, [initialState]);
+    const states = program.reduce(reduceCommand, [initialState]);
 
     const signalStrengths = [20, 60, 100, 140, 180, 220].map((cycle) => {
         const state = states.find((state) => state.cycle === cycle);
@@ -54,5 +66,8 @@ export default function day10() {
     });
 
     const sum = signalStrengths.reduce((sum, signalStrength) => sum + signalStrength);
-    console.log(sum);
+    console.log(`Answer part 1: ${sum}`);
+
+    console.log(`Answer part 2:`);
+    render(states, 40);
 }
