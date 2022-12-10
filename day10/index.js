@@ -66,8 +66,8 @@ export default function day10() {
     });
 
     const sum = signalStrengths.reduce((sum, signalStrength) => sum + signalStrength);
-    console.log(`Answer part 1: ${sum}`);
 
+    console.log(`Answer part 1: ${sum}`);
     console.log(`Answer part 2:`);
     render(states, 40);
 }
