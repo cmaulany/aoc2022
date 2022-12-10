@@ -19,7 +19,7 @@ function tick(stacks, move, flipOrder = false) {
 }
 
 export default function day5() {
-    const input = readFileSync('./day5/input.txt', { encoding: 'utf8' });
+    const input = readFileSync('./day05/input.txt', { encoding: 'utf8' });
     const lines = input.split('\n');
 
     const stackCount = 9;

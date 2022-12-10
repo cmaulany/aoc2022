@@ -40,11 +40,10 @@ function viewingDistance(trees, position, direction) {
         trees[position.y][position.x] < tree
     )
 
-    const isInfinite =
-        !isInner && (
-            typeof trees[position.y]?.[position.x] !== 'number' ||
-            trees[position.y][position.x] < tree
-        );
+    const isInfinite = !isInner && (
+        typeof trees[position.y]?.[position.x] !== 'number' ||
+        trees[position.y][position.x] < tree
+    );
 
     return {
         distance,
@@ -53,7 +52,7 @@ function viewingDistance(trees, position, direction) {
 }
 
 export default function day8() {
-    const input = readFileSync('./day8/input.txt', { encoding: 'utf8' });
+    const input = readFileSync('./day08/input.txt', { encoding: 'utf8' });
     const trees = input.split('\n').map((line) => line.split('').map(Number));
 
     const visibilityMap = [];
@@ -85,6 +84,6 @@ export default function day8() {
         }
     }
 
-    const max = scenicScoreMap.flat().reduce((max, score) => Math.max(max, score), 0);
+    const max = Math.max(...scenicScoreMap.flat());
     console.log(`Answer part 2: ${max}`);
 }

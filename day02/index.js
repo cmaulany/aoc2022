@@ -59,7 +59,7 @@ function getHand(oponent, desiredOutcome) {
 }
 
 export default function day2() {
-    const input = readFileSync('./day2/input.txt', { encoding: 'utf8' });
+    const input = readFileSync('./day02/input.txt', { encoding: 'utf8' });
 
     const guide = input.split('\n').map((line) => line.split(' '));
 

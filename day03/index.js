@@ -8,7 +8,7 @@ function findMisplacedItem(rucksack) {
 function findBadge(group) {
     const counts = {};
     group.forEach((rucksack) => {
-        const itemTypes = new Set(rucksack.reduce((agg, compartment) => agg.concat(compartment)));
+        const itemTypes = new Set(rucksack.flat());
         itemTypes.forEach((item) => {
             counts[item] ??= 0;
             counts[item]++;
@@ -31,7 +31,7 @@ function getPrioritySum(items) {
 }
 
 export default function day3() {
-    const input = readFileSync('./day3/input.txt', { encoding: 'utf8' });
+    const input = readFileSync('./day03/input.txt', { encoding: 'utf8' });
 
     const rucksacks = input.split('\n').map((line) => line.split('')).map((chars) => {
         const middle = chars.length / 2;

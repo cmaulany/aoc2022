@@ -1,8 +1,7 @@
 import { readFileSync } from 'fs';
 
-function reduceCommand(states, command) {
+function commandRedcuer(states, command) {
     const [state] = states;
-
     const { instruction, value } = command;
 
     switch (instruction) {
@@ -37,9 +36,11 @@ function render(states, width) {
         return isLit ? '#' : '.';
     });
 
+    const rows = [];
     for (let i = 0; i < pixels.length; i += width) {
-        console.log(pixels.slice(i, i + width).join(''));
+        rows.push(pixels.slice(i, i + width).join(''));
     }
+    return rows.join('\n');
 }
 
 export default function day10() {
@@ -58,7 +59,7 @@ export default function day10() {
         x: 1
     };
 
-    const states = program.reduce(reduceCommand, [initialState]);
+    const states = program.reduce(commandRedcuer, [initialState]);
 
     const signalStrengths = [20, 60, 100, 140, 180, 220].map((cycle) => {
         const state = states.find((state) => state.cycle === cycle);
@@ -66,8 +67,8 @@ export default function day10() {
     });
 
     const sum = signalStrengths.reduce((sum, signalStrength) => sum + signalStrength);
+    const crtOutput = render(states, 40);
 
     console.log(`Answer part 1: ${sum}`);
-    console.log(`Answer part 2:`);
-    render(states, 40);
+    console.log(`Answer part 2: \n${crtOutput}`);
 }

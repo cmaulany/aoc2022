@@ -5,16 +5,17 @@ function move(state, move) {
     const { visited, rope } = state;
 
     let newRope = rope;
+    let newVisited = { ...visited };
     for (let i = 0; i < distance; i++) {
         newRope = moveRope(newRope, direction);
 
         const tail = newRope[newRope.length - 1];
-        visited[`${tail.x},${tail.y}`] = true;
+        newVisited[`${tail.x},${tail.y}`] = true;
     }
 
     return {
         rope: newRope,
-        visited,
+        visited: newVisited,
     };
 }
 
@@ -55,7 +56,7 @@ function moveRope(rope, direction) {
 }
 
 export default function day9() {
-    const input = readFileSync('./day9/input.txt', { encoding: 'utf8' });
+    const input = readFileSync('./day09/input.txt', { encoding: 'utf8' });
 
     const moves = input.split('\n').map((line) => {
         const [direction, distance] = line.split(' ');

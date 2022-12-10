@@ -11,7 +11,7 @@ const overlaps = (a, b) => (
 );
 
 export default function day4() {
-    const input = readFileSync('./day4/input.txt', { encoding: 'utf8' });
+    const input = readFileSync('./day04/input.txt', { encoding: 'utf8' });
 
     const pairs = input.split('\n').map((line) => {
         const [startA, endA, startB, endB] =

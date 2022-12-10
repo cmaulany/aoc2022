@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 
 export default function day1() {
-    const input = readFileSync('./day1/input.txt', { encoding: 'utf8' });
+    const input = readFileSync('./day01/input.txt', { encoding: 'utf8' });
     
     const elves = input.split('\n\n').map((elfInput) => elfInput.split('\n').map(Number));
     

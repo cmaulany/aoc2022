@@ -20,7 +20,7 @@ function findMarker(data, size) {
 }
 
 export default function day6() {
-    const data = readFileSync('./day6/input.txt', { encoding: 'utf8' });
+    const data = readFileSync('./day06/input.txt', { encoding: 'utf8' });
 
     const startOfPacketMarker = findMarker(data, 4);
     const startOfMessageMarker = findMarker(data, 14);

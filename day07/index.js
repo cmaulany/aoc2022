@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 
-function reduceCommand(state) {
+function commandReducer(state) {
     const { lines, path, fileSystem } = state;
 
     const [head, ...tail] = lines;
@@ -108,7 +108,7 @@ function getDirectoriesWhere(fileSystem, comparator) {
 }
 
 export default function day7() {
-    const input = readFileSync('./day7/input.txt', { encoding: 'utf8' });
+    const input = readFileSync('./day07/input.txt', { encoding: 'utf8' });
 
     const lines = input.split(/\r?\n/).map((line) => line.split(' '));
 
@@ -123,7 +123,7 @@ export default function day7() {
 
     let state = initialState;
     while (state.lines.length > 0) {
-        state = reduceCommand(state);
+        state = commandReducer(state);
     }
     const fileSystem = calculateSize(state.fileSystem);
 
