@@ -70,5 +70,5 @@ export default function day10() {
     const crtOutput = render(states, 40);
 
     console.log(`Answer part 1: ${sum}`);
-    console.log(`Answer part 2: \n${crtOutput}`);
+    console.log(`Answer part 2:\n${crtOutput}`);
 }
