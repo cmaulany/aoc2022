@@ -1,16 +1,12 @@
 import { readFileSync } from 'fs';
 
-function toKey(square) {
-    return `${square.x},${square.y}`;
-}
-
 function getNeighbors(map, square) {
     const deltas = [
         { x: 0, y: - 1 },
         { x: 1, y: 0 },
         { x: 0, y: 1 },
         { x: -1, y: 0 }
-    ]
+    ];
     const positions = deltas
         .map((delta) => ({
             x: delta.x + square.x,
@@ -26,44 +22,40 @@ function getNeighbors(map, square) {
 }
 
 function findPath(map, start, end) {
-    const startKey = toKey(start);
     const toVisit = [start];
     const cameFrom = {};
-    const scores = { [startKey]: 0 };
+    const scores = { [start.key]: 0 };
 
     while (toVisit.length > 0) {
         const current = toVisit.shift();
-        const currentKey = toKey(current);
-        const currentScore = scores[currentKey];
+        const currentScore = scores[current.key];
 
-        const neighbors = getNeighbors(map, current);
-        const eligibleNeighbors = neighbors.filter(
+        const eligibleNeighbors = getNeighbors(map, current).filter(
             (neighbor) => neighbor.height <= current.height + 1
         );
 
         eligibleNeighbors.forEach((neighbor) => {
-            const neighborKey = toKey(neighbor);
             const neighborScore = currentScore + 1;
             if (
-                !scores.hasOwnProperty(neighborKey) ||
-                neighborScore < scores[neighborKey]
+                !scores.hasOwnProperty(neighbor.key) ||
+                neighborScore < scores[neighbor.key]
             ) {
-                cameFrom[neighborKey] = currentKey;
-                scores[neighborKey] = neighborScore;
+                cameFrom[neighbor.key] = current.key;
+                scores[neighbor.key] = neighborScore;
                 toVisit.push(neighbor);
             }
         });
     }
 
-    let pathKey = toKey(end);
-    if (!cameFrom[pathKey]) {
+    let cameFromKey = end.key;
+    if (!cameFrom[cameFromKey]) {
         return null;
     }
 
     const path = [];
-    while (pathKey !== toKey(start)) {
-        path.unshift(pathKey);
-        pathKey = cameFrom[pathKey];
+    while (cameFromKey !== start.key) {
+        path.unshift(cameFromKey);
+        cameFromKey = cameFrom[cameFromKey];
     }
 
     return path;
@@ -77,10 +69,12 @@ export default function day12() {
         const isEnd = symbol === 'E';
         symbol = isStart ? 'a' : isEnd ? 'z' : symbol;
         const height = symbol.charCodeAt(0) - 'a'.charCodeAt(0);
+        const key = `${x},${y}`;
 
         return {
             x,
             y,
+            key,
             symbol,
             height,
             isStart,
@@ -97,8 +91,8 @@ export default function day12() {
     const starts = map.flat().filter((square) => square.symbol === 'a');
     const distances = starts
         .map((start) => findPath(map, start, end))
-        .filter((path => path !== null))
+        .filter((path) => path !== null)
         .map((path) => path.length);
-    const bestDistance = Math.min(...distances);
-    console.log(`Answer part 2: ${bestDistance}`);
+    const minDistance = Math.min(...distances);
+    console.log(`Answer part 2: ${minDistance}`);
 }
