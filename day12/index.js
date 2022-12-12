@@ -26,40 +26,44 @@ function getNeighbors(map, square) {
 }
 
 function findPath(map, start, end) {
+    const startKey = toKey(start);
     const toVisit = [start];
     const cameFrom = {};
-    const gScore = { [toKey(start)]: 0 };
-    while (toVisit.length > 0) {
-        const square = toVisit.shift();
-        const score = gScore[toKey(square)];
+    const scores = { [startKey]: 0 };
 
-        const neighbors = getNeighbors(map, square);
-        const eligibleNeighbors = neighbors.filter((neighbor) =>
-            !gScore.hasOwnProperty(toKey(neighbor)) &&
-            neighbor.height <= square.height + 1
+    while (toVisit.length > 0) {
+        const current = toVisit.shift();
+        const currentKey = toKey(current);
+        const currentScore = scores[currentKey];
+
+        const neighbors = getNeighbors(map, current);
+        const eligibleNeighbors = neighbors.filter(
+            (neighbor) => neighbor.height <= current.height + 1
         );
 
         eligibleNeighbors.forEach((neighbor) => {
-            const key = toKey(neighbor);
-            cameFrom[key] = toKey(square);
-            gScore[key] = score + 1;
-            toVisit.push(neighbor);
+            const neighborKey = toKey(neighbor);
+            const neighborScore = currentScore + 1;
+            if (
+                !scores.hasOwnProperty(neighborKey) ||
+                neighborScore < scores[neighborKey]
+            ) {
+                cameFrom[neighborKey] = currentKey;
+                scores[neighborKey] = neighborScore;
+                toVisit.push(neighbor);
+            }
         });
     }
 
-    if (cameFrom[end]) {
+    let pathKey = toKey(end);
+    if (!cameFrom[pathKey]) {
         return null;
     }
 
-    // console.log(cameFrom);
-
-
-    let x = toKey(end);
     const path = [];
-    while (x) {
-        path.unshift(x);
-        x = cameFrom[x];
-        // console.log(x);
+    while (pathKey !== toKey(start)) {
+        path.unshift(pathKey);
+        pathKey = cameFrom[pathKey];
     }
 
     return path;
@@ -71,9 +75,9 @@ export default function day12() {
     const map = input.split('\n').map((line, y) => line.split('').map((symbol, x) => {
         const isStart = symbol === 'S';
         const isEnd = symbol === 'E';
-
         symbol = isStart ? 'a' : isEnd ? 'z' : symbol;
         const height = symbol.charCodeAt(0) - 'a'.charCodeAt(0);
+
         return {
             x,
             y,
@@ -87,13 +91,14 @@ export default function day12() {
     const start = map.flat().find((square) => square.isStart);
     const end = map.flat().find((square) => square.isEnd);
 
-    const path = findPath(map, start, end);
-    // console.log(path);
-    console.log(path.length - 1);
+    const defaultPath = findPath(map, start, end);
+    console.log(`Answer part 1: ${defaultPath.length}`);
 
     const starts = map.flat().filter((square) => square.symbol === 'a');
-    const distances = starts.map((start) => findPath(map, start, end).length - 1).filter((d => d > 0));
-    const best = Math.min(...distances);
-    console.log(best);
-    // console.log(map, start, end);
+    const distances = starts
+        .map((start) => findPath(map, start, end))
+        .filter((path => path !== null))
+        .map((path) => path.length);
+    const bestDistance = Math.min(...distances);
+    console.log(`Answer part 2: ${bestDistance}`);
 }
