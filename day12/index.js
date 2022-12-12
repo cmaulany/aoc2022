@@ -22,40 +22,32 @@ function getNeighbors(map, square) {
 }
 
 function findPath(map, start, end) {
-    const toVisit = [start];
     const cameFrom = {};
-    const scores = { [start.key]: 0 };
+    const openSquares = [start];
+    while (openSquares.length > 0) {
+        const current = openSquares.shift();
 
-    while (toVisit.length > 0) {
-        const current = toVisit.shift();
-        const currentScore = scores[current.key];
-
-        const eligibleNeighbors = getNeighbors(map, current).filter(
-            (neighbor) => neighbor.height <= current.height + 1
+        const newNeighbors = getNeighbors(map, current).filter(
+            (neighbor) =>
+                !cameFrom.hasOwnProperty(neighbor.key) &&
+                neighbor.height <= current.height + 1
         );
 
-        eligibleNeighbors.forEach((neighbor) => {
-            const neighborScore = currentScore + 1;
-            if (
-                !scores.hasOwnProperty(neighbor.key) ||
-                neighborScore < scores[neighbor.key]
-            ) {
-                cameFrom[neighbor.key] = current.key;
-                scores[neighbor.key] = neighborScore;
-                toVisit.push(neighbor);
-            }
+        newNeighbors.forEach((neighbor) => {
+            cameFrom[neighbor.key] = current.key;
+            openSquares.push(neighbor);
         });
     }
 
-    let cameFromKey = end.key;
-    if (!cameFrom[cameFromKey]) {
+    if (!cameFrom[end.key]) {
         return null;
     }
-
+    
     const path = [];
-    while (cameFromKey !== start.key) {
-        path.unshift(cameFromKey);
-        cameFromKey = cameFrom[cameFromKey];
+    let key = end.key;
+    while (key !== start.key) {
+        path.unshift(key);
+        key = cameFrom[key];
     }
 
     return path;
