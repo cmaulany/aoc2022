@@ -22,32 +22,32 @@ function getNeighbors(map, square) {
 }
 
 function findPath(map, start, end) {
-    const cameFrom = {};
+    const cameFrom = new Map();
     const openSquares = [start];
     while (openSquares.length > 0) {
         const current = openSquares.shift();
 
         const newNeighbors = getNeighbors(map, current).filter(
             (neighbor) =>
-                !cameFrom.hasOwnProperty(neighbor.key) &&
+                !cameFrom.has(neighbor) &&
                 neighbor.height <= current.height + 1
         );
 
         newNeighbors.forEach((neighbor) => {
-            cameFrom[neighbor.key] = current.key;
+            cameFrom.set(neighbor, current);
             openSquares.push(neighbor);
         });
     }
 
-    if (!cameFrom[end.key]) {
+    if (!cameFrom.has(end)) {
         return null;
     }
-    
+
     const path = [];
-    let key = end.key;
-    while (key !== start.key) {
-        path.unshift(key);
-        key = cameFrom[key];
+    let current = end;
+    while (current !== start) {
+        path.unshift(current);
+        current = cameFrom.get(current);
     }
 
     return path;
@@ -61,12 +61,10 @@ export default function day12() {
         const isEnd = symbol === 'E';
         symbol = isStart ? 'a' : isEnd ? 'z' : symbol;
         const height = symbol.charCodeAt(0) - 'a'.charCodeAt(0);
-        const key = `${x},${y}`;
 
         return {
             x,
             y,
-            key,
             symbol,
             height,
             isStart,
