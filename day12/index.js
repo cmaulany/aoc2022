@@ -26,6 +26,9 @@ function findPath(map, start, end) {
     const openSquares = [start];
     while (openSquares.length > 0) {
         const current = openSquares.shift();
+        if (current === end) {
+            break;
+        }
 
         const newNeighbors = getNeighbors(map, current).filter(
             (neighbor) =>
