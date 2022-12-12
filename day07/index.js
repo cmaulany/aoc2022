@@ -92,10 +92,9 @@ function getDirectoriesWhere(fileSystem, comparator) {
         return [];
     }
 
-    const childDirectories = Object.values(fileSystem.children ?? {}).reduce(
-        (agg, child) => [...agg, ...getDirectoriesWhere(child, comparator)],
-        []
-    );
+    const childDirectories = Object.values(fileSystem.children ?? {}).map(
+        (child) => getDirectoriesWhere(child, comparator)
+    ).flat();
 
     if (!comparator(fileSystem)) {
         return childDirectories;
