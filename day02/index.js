@@ -11,8 +11,8 @@ const options = {
     },
     Scissors: {
         beats: 'Paper',
-        score: 3
-    }
+        score: 3,
+    },
 };
 
 function getOutcome(round) {
@@ -31,7 +31,7 @@ function getScore(round) {
     const outcomeScore = {
         Win: 6,
         Lose: 0,
-        Draw: 3
+        Draw: 3,
     }[getOutcome(round)];
 
     const handScore = options[round.you].score;
@@ -43,18 +43,18 @@ function getHand(oponent, desiredOutcome) {
         Rock: {
             Win: 'Paper',
             Draw: 'Rock',
-            Lose: 'Scissors'
+            Lose: 'Scissors',
         },
         Paper: {
             Win: 'Scissors',
             Draw: 'Paper',
-            Lose: 'Rock'
+            Lose: 'Rock',
         },
         Scissors: {
             Win: 'Rock',
             Draw: 'Scissors',
-            Lose: 'Paper'
-        }
+            Lose: 'Paper',
+        },
     }[oponent][desiredOutcome];
 }
 
@@ -72,7 +72,7 @@ export default function day2() {
         you: {
             X: 'Rock',
             Y: 'Paper',
-            Z: 'Scissors'
+            Z: 'Scissors',
         }[right]
     }));
 
@@ -86,13 +86,13 @@ export default function day2() {
         const desiredOutcome = {
             X: 'Lose',
             Y: 'Draw',
-            Z: 'Win'
+            Z: 'Win',
         }[right];
         const you = getHand(opponent, desiredOutcome);
 
         return {
             opponent,
-            you
+            you,
         };
     });
 
