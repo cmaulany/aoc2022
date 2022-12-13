@@ -34,4 +34,10 @@ export default function day13() {
     const sum = indexes.reduce((sum, i) => sum + i);
 
     console.log(sum);
+
+    const concatted = [...pairs.flat(), [[2]], [[6]]].sort(compare).reverse();
+    console.log(concatted);
+    const a = concatted.findIndex((el) => JSON.stringify(el) === JSON.stringify([[2]])) + 1;
+    const b = concatted.findIndex((el) => JSON.stringify(el) === JSON.stringify([[6]])) + 1;
+    console.log(a * b);
 }
