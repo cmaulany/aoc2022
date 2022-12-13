@@ -21,6 +21,7 @@ function compare(a, b) {
             return res;
         }
     }
+
     return a.length < b.length ? 1 : a.length > b.length ? -1 : 0;
 }
 
@@ -28,16 +29,26 @@ export default function day13() {
     const input = readFileSync('./day13/input.txt', { encoding: 'utf8' });
 
     const pairs = input.split('\n\n').map((group) => group.split('\n').map((line) => JSON.parse(line)));
-    const res = pairs.map((pair) => compare(...pair));
 
-    const indexes = res.map((r, i) => ({ r, i: i + 1 })).filter(({r}) => r === 1).map(({i}) => i);
-    const sum = indexes.reduce((sum, i) => sum + i);
+    const pairsAreOrdered = pairs.map((pair) => compare(...pair));
+    const indexesOfOrderedPairs = pairsAreOrdered
+        .map((pairIsOrdered, index) => ({ pairIsOrdered, index: index + 1 }))
+        .filter(({ pairIsOrdered }) => pairIsOrdered === 1)
+        .map(({ index }) => index);
+    const sum = indexesOfOrderedPairs.reduce((sum, index) => sum + index);
+    console.log(`Answer part 1: ${sum}`);
 
-    console.log(sum);
+    const tokens = [
+        [[2]],
+        [[6]]
+    ];
 
-    const concatted = [...pairs.flat(), [[2]], [[6]]].sort(compare).reverse();
-    console.log(concatted);
-    const a = concatted.findIndex((el) => JSON.stringify(el) === JSON.stringify([[2]])) + 1;
-    const b = concatted.findIndex((el) => JSON.stringify(el) === JSON.stringify([[6]])) + 1;
-    console.log(a * b);
+    const orderedPackets = [...pairs.flat(), ...tokens].sort(compare).reverse();
+    const indexes = tokens.map((token) =>
+        orderedPackets.findIndex(
+            (list) => JSON.stringify(list) == JSON.stringify(token)
+        ) + 1
+    );
+    const product = indexes.reduce((product, index) => product * index);
+    console.log(`Answer part 2: ${product}`);
 }
