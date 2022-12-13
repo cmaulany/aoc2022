@@ -14,15 +14,15 @@ function compare(a, b) {
     }
 
     for (let i = 0; i < a.length && i < b.length; i++) {
-        const a_ = a[i];
-        const b_ = b[i];
-        const res = compare(a_, b_);
-        if (res !== 0) {
-            return res;
+        const aItem = a[i];
+        const bItem = b[i];
+        const comparison = compare(aItem, bItem);
+        if (comparison !== 0) {
+            return comparison;
         }
     }
 
-    return a.length < b.length ? 1 : a.length > b.length ? -1 : 0;
+    return compare(a.length, b.length);
 }
 
 export default function day13() {
@@ -46,7 +46,7 @@ export default function day13() {
     const orderedPackets = [...pairs.flat(), ...tokens].sort(compare).reverse();
     const indexes = tokens.map((token) =>
         orderedPackets.findIndex(
-            (list) => JSON.stringify(list) == JSON.stringify(token)
+            (packet) => JSON.stringify(packet) == JSON.stringify(token)
         ) + 1
     );
     const product = indexes.reduce((product, index) => product * index);
