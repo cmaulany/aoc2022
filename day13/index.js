@@ -14,9 +14,7 @@ function compare(a, b) {
     }
 
     for (let i = 0; i < a.length && i < b.length; i++) {
-        const aItem = a[i];
-        const bItem = b[i];
-        const comparison = compare(aItem, bItem);
+        const comparison = compare(a[i], b[i]);
         if (comparison !== 0) {
             return comparison;
         }
