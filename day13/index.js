@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 
 function compare(a, b) {
     if (!Array.isArray(a) && !Array.isArray(b)) {
-        return a < b ? 1 : a > b ? -1 : 0;
+        return a < b ? -1 : a > b ? 1 : 0;
     }
 
     if (!Array.isArray(a)) {
@@ -30,7 +30,7 @@ export default function day13() {
     const pairsAreOrdered = pairs.map((pair) => compare(...pair));
     const indexesOfOrderedPairs = pairsAreOrdered
         .map((pairIsOrdered, index) => ({ pairIsOrdered, index }))
-        .filter(({ pairIsOrdered }) => pairIsOrdered === 1)
+        .filter(({ pairIsOrdered }) => pairIsOrdered === -1)
         .map(({ index }) => index + 1);
     const sum = indexesOfOrderedPairs.reduce((sum, index) => sum + index);
     console.log(`Answer part 1: ${sum}`);
@@ -40,7 +40,7 @@ export default function day13() {
         [[6]],
     ];
 
-    const orderedPackets = [...pairs.flat(), ...tokens].sort(compare).reverse();
+    const orderedPackets = [...pairs.flat(), ...tokens].sort(compare);
     const indexes = tokens.map((token) =>
         orderedPackets.findIndex(
             (packet) => JSON.stringify(packet) == JSON.stringify(token)
