@@ -64,7 +64,7 @@ function getFinalState(state) {
 
 function drawWall(grid, path) {
     const newGrid = { ...grid };
-    newGrid[toKey([0])] = 'wall';
+    newGrid[toKey(path[0])] = 'wall';
     for (let i = 1; i < path.length; i++) {
         const from = path[i - 1];
         const to = path[i];
