@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 
-function calculateFinalSandUnitPosition(state, startPosition) {
+function getFinalSandUnitPosition(state, startPosition) {
     const { grid, maxY, floorHeight } = state;
 
     if (grid[`${startPosition.x},${startPosition.y}`]) {
@@ -39,7 +39,7 @@ function calculateFinalSandUnitPosition(state, startPosition) {
 
 function pourSandUnit(state, position) {
     const { grid } = state;
-    const finalPosition = calculateFinalSandUnitPosition(state, position);
+    const finalPosition = getFinalSandUnitPosition(state, position);
 
     if (!finalPosition) {
         return {
@@ -52,7 +52,7 @@ function pourSandUnit(state, position) {
     return state;
 }
 
-function calculateFinalState(state) {
+function getFinalState(state) {
     while (!state.isFinished) {
         state = pourSandUnit(state, { x: 500, y: 0 });
     }
@@ -95,12 +95,12 @@ export default function day14() {
     const sandCount = (state) => Object.values(state.grid).filter((cell) => cell === 'sand').length;
 
     const initialAbyssState = { grid, maxY };
-    const finalAbyssState = calculateFinalState(initialAbyssState);
+    const finalAbyssState = getFinalState(initialAbyssState);
     const abyssSandCount = sandCount(finalAbyssState);
     console.log(`Answer part 1: ${abyssSandCount}`);
 
     const initialFloorState = { grid, floorHeight: maxY + 2 };
-    const finalFloorState = calculateFinalState(initialFloorState);
+    const finalFloorState = getFinalState(initialFloorState);
     const floorSandCount = sandCount(finalFloorState);
     console.log(`Answer part 2: ${floorSandCount}`);
 }
