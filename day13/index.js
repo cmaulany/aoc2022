@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 
 function compare(a, b) {
     if (!Array.isArray(a) && !Array.isArray(b)) {
-        return a < b ? -1 : a > b ? 1 : 0;
+        return Math.sign(a - b);
     }
 
     if (!Array.isArray(a)) {
@@ -43,7 +43,7 @@ export default function day13() {
     const orderedPackets = [...pairs.flat(), ...tokens].sort(compare);
     const indexes = tokens.map((token) =>
         orderedPackets.findIndex(
-            (packet) => JSON.stringify(packet) == JSON.stringify(token)
+            (packet) => JSON.stringify(packet) === JSON.stringify(token)
         ) + 1
     );
     const product = indexes.reduce((product, index) => product * index);
