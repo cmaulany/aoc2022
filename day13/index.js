@@ -25,20 +25,19 @@ function compare(a, b) {
 
 export default function day13() {
     const input = readFileSync('./day13/input.txt', { encoding: 'utf8' });
-
     const pairs = input.split('\n\n').map((group) => group.split('\n').map((line) => JSON.parse(line)));
 
     const pairsAreOrdered = pairs.map((pair) => compare(...pair));
     const indexesOfOrderedPairs = pairsAreOrdered
-        .map((pairIsOrdered, index) => ({ pairIsOrdered, index: index + 1 }))
+        .map((pairIsOrdered, index) => ({ pairIsOrdered, index }))
         .filter(({ pairIsOrdered }) => pairIsOrdered === 1)
-        .map(({ index }) => index);
+        .map(({ index }) => index + 1);
     const sum = indexesOfOrderedPairs.reduce((sum, index) => sum + index);
     console.log(`Answer part 1: ${sum}`);
 
     const tokens = [
         [[2]],
-        [[6]]
+        [[6]],
     ];
 
     const orderedPackets = [...pairs.flat(), ...tokens].sort(compare).reverse();
