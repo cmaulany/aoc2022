@@ -1,9 +1,11 @@
 import { readFileSync } from 'fs';
 
+const toKey = (position) => `${position.x},${position.y}`;
+
 function getFinalSandUnitPosition(state, startPosition) {
     const { grid, maxY, floorHeight } = state;
 
-    if (grid[`${startPosition.x},${startPosition.y}`]) {
+    if (grid[toKey(startPosition)]) {
         return null;
     }
 
@@ -21,7 +23,7 @@ function getFinalSandUnitPosition(state, startPosition) {
                 y: position.y + delta.y,
             }))
             .find((position) =>
-                !grid[`${position.x},${position.y}`] &&
+                !grid[toKey(position)] &&
                 (floorHeight === undefined || position.y < floorHeight)
             );
 
@@ -48,7 +50,7 @@ function pourSandUnit(state, position) {
         };
     }
 
-    grid[`${finalPosition.x},${finalPosition.y}`] = 'sand';
+    grid[toKey(finalPosition)] = 'sand';
     return state;
 }
 
@@ -61,7 +63,7 @@ function getFinalState(state) {
 
 function drawWall(grid, path) {
     const newGrid = { ...grid };
-    newGrid[`${path[0].x},${path[0].y}`] = 'wall';
+    newGrid[toKey([0])] = 'wall';
     for (let i = 1; i < path.length; i++) {
         const from = path[i - 1];
         const to = path[i];
@@ -76,7 +78,7 @@ function drawWall(grid, path) {
                 x: position.x + delta.x,
                 y: position.y + delta.y
             };
-            newGrid[`${position.x},${position.y}`] = 'wall';
+            newGrid[toKey(position)] = 'wall';
         } while (position.x !== to.x || position.y !== to.y)
     }
     return newGrid;
