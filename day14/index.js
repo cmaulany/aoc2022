@@ -90,7 +90,7 @@ export default function day14() {
     }));
 
     const grid = paths.reduce(drawWall, {});
-    const maxY = paths.flat().reduce((maxY, { y }) => Math.max(maxY, y), 0);
+    const maxY = Math.max(...paths.flat().map((path) => path.y));
 
     const sandCount = (state) => Object.values(state.grid).filter((cell) => cell === 'sand').length;
 
