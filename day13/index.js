@@ -27,10 +27,10 @@ export default function day13() {
     const input = readFileSync('./day13/input.txt', { encoding: 'utf8' });
     const pairs = input.split('\n\n').map((group) => group.split('\n').map((line) => JSON.parse(line)));
 
-    const pairsAreOrdered = pairs.map((pair) => compare(...pair));
+    const pairsAreOrdered = pairs.map((pair) => compare(...pair) === -1);
     const indexesOfOrderedPairs = pairsAreOrdered
         .map((pairIsOrdered, index) => ({ pairIsOrdered, index }))
-        .filter(({ pairIsOrdered }) => pairIsOrdered === -1)
+        .filter(({ pairIsOrdered }) => pairIsOrdered)
         .map(({ index }) => index + 1);
     const sum = indexesOfOrderedPairs.reduce((sum, index) => sum + index);
     console.log(`Answer part 1: ${sum}`);
