@@ -92,15 +92,15 @@ export default function day14() {
     const grid = paths.reduce(drawWall, {});
     const maxY = Math.max(...paths.flat().map((path) => path.y));
 
-    const sandCount = (state) => Object.values(state.grid).filter((cell) => cell === 'sand').length;
+    const countSand = (state) => Object.values(state.grid).filter((cell) => cell === 'sand').length;
 
     const initialAbyssState = { grid, maxY };
     const finalAbyssState = getFinalState(initialAbyssState);
-    const abyssSandCount = sandCount(finalAbyssState);
+    const abyssSandCount = countSand(finalAbyssState);
     console.log(`Answer part 1: ${abyssSandCount}`);
 
     const initialFloorState = { grid, floorHeight: maxY + 2 };
     const finalFloorState = getFinalState(initialFloorState);
-    const floorSandCount = sandCount(finalFloorState);
+    const floorSandCount = countSand(finalFloorState);
     console.log(`Answer part 2: ${floorSandCount}`);
 }
