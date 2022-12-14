@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 
-function commandRedcuer(states, command) {
+function commandReducer(states, command) {
     const [state] = states;
     const { instruction, value } = command;
 
@@ -59,7 +59,7 @@ export default function day10() {
         x: 1
     };
 
-    const states = program.reduce(commandRedcuer, [initialState]);
+    const states = program.reduce(commandReducer, [initialState]);
 
     const signalStrengths = [20, 60, 100, 140, 180, 220].map((cycle) => {
         const state = states.find((state) => state.cycle === cycle);
