@@ -55,6 +55,7 @@ function pourSandUnit(state, position) {
 }
 
 function getFinalState(state) {
+    state = { ...state, grid: { ...state.grid } };
     while (!state.isFinished) {
         state = pourSandUnit(state, { x: 500, y: 0 });
     }
@@ -69,14 +70,14 @@ function drawWall(grid, path) {
         const to = path[i];
         const delta = {
             x: Math.sign(to.x - from.x),
-            y: Math.sign(to.y - from.y)
+            y: Math.sign(to.y - from.y),
         };
 
         let position = from;
         do {
             position = {
                 x: position.x + delta.x,
-                y: position.y + delta.y
+                y: position.y + delta.y,
             };
             newGrid[toKey(position)] = 'wall';
         } while (position.x !== to.x || position.y !== to.y)
