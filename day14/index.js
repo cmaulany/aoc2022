@@ -1,11 +1,18 @@
 import { readFileSync } from 'fs';
 
-function calculateFinalSandUnitPosition(grid, startPosition) {
-    let deltas = [
+function calculateFinalSandUnitPosition(state, startPosition) {
+    const { grid, maxY, floorHeight } = state;
+
+    if (grid[`${startPosition.x},${startPosition.y}`]) {
+        return null;
+    }
+
+    const deltas = [
         { x: 0, y: 1 },
         { x: -1, y: 1 },
         { x: 1, y: 1 },
     ];
+
     let position = startPosition;
     while (true) {
         const nextPosition = deltas
@@ -13,13 +20,16 @@ function calculateFinalSandUnitPosition(grid, startPosition) {
                 x: position.x + delta.x,
                 y: position.y + delta.y,
             }))
-            .find((position) => !grid[`${position.x},${position.y}`]);
+            .find((position) =>
+                !grid[`${position.x},${position.y}`] &&
+                (floorHeight === undefined || position.y < floorHeight)
+            );
 
         if (!nextPosition) {
             return position;
         }
 
-        if (nextPosition.y > 1000) {
+        if (nextPosition.y > maxY) {
             return null;
         }
 
@@ -29,7 +39,8 @@ function calculateFinalSandUnitPosition(grid, startPosition) {
 
 function pourSandUnit(state, position) {
     const { grid } = state;
-    const finalPosition = calculateFinalSandUnitPosition(grid, position);
+    const finalPosition = calculateFinalSandUnitPosition(state, position);
+
     if (!finalPosition) {
         return {
             ...state,
@@ -37,13 +48,38 @@ function pourSandUnit(state, position) {
         };
     }
 
-    return {
-        ...state,
-        grid: {
-            ...grid,
-            [`${finalPosition.x},${finalPosition.y}`]: 'sand'
-        },
-    };
+    grid[`${finalPosition.x},${finalPosition.y}`] = 'sand';
+    return state;
+}
+
+function calculateFinalState(state) {
+    while (!state.isFinished) {
+        state = pourSandUnit(state, { x: 500, y: 0 });
+    }
+    return state;
+}
+
+function drawWall(grid, path) {
+    const newGrid = { ...grid };
+    newGrid[`${path[0].x},${path[0].y}`] = 'wall';
+    for (let i = 1; i < path.length; i++) {
+        const from = path[i - 1];
+        const to = path[i];
+        const delta = {
+            x: Math.sign(to.x - from.x),
+            y: Math.sign(to.y - from.y)
+        };
+
+        let position = from;
+        do {
+            position = {
+                x: position.x + delta.x,
+                y: position.y + delta.y
+            };
+            newGrid[`${position.x},${position.y}`] = 'wall';
+        } while (position.x !== to.x || position.y !== to.y)
+    }
+    return newGrid;
 }
 
 export default function day14() {
@@ -51,38 +87,20 @@ export default function day14() {
     const paths = input.split('\n').map((line) => line.split(' -> ').map((position) => {
         const [x, y] = position.split(',').map(Number);
         return { x, y };
-    }))
+    }));
 
-    const grid = {};
-    paths.forEach((path) => {
-        grid[`${path[0].x},${path[0].y}`] = 'wall';
-        for (let i = 1; i < path.length; i++) {
-            const from = path[i - 1];
-            const to = path[i];
-            const delta = {
-                x: Math.sign(to.x - from.x),
-                y: Math.sign(to.y - from.y)
-            };
+    const grid = paths.reduce(drawWall, {});
+    const maxY = paths.flat().reduce((maxY, { y }) => Math.max(maxY, y), 0);
 
-            let position = from;
-            do {
-                position = {
-                    x: position.x + delta.x,
-                    y: position.y + delta.y
-                };
-                grid[`${position.x},${position.y}`] = 'wall';
-            } while (position.x !== to.x || position.y !== to.y)
-        }
-    });
+    const sandCount = (state) => Object.values(state.grid).filter((cell) => cell === 'sand').length;
 
-    let state = {
-        isFinished: false,
-        grid
-    };
-    while (!state.isFinished) {
-        state = pourSandUnit(state, { x: 500, y: 0 });
-    }
+    const initialAbyssState = { grid, maxY };
+    const finalAbyssState = calculateFinalState(initialAbyssState);
+    const abyssSandCount = sandCount(finalAbyssState);
+    console.log(`Answer part 1: ${abyssSandCount}`);
 
-    const count = Object.values(state.grid).filter((cell) => cell === 'sand');
-    console.log(count.length);
+    const initialFloorState = { grid, floorHeight: maxY + 2 };
+    const finalFloorState = calculateFinalState(initialFloorState);
+    const floorSandCount = sandCount(finalFloorState);
+    console.log(`Answer part 2: ${floorSandCount}`);
 }
