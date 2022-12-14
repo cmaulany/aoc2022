@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 const toKey = (position) => `${position.x},${position.y}`;
 
 function getFinalSandUnitPosition(state, startPosition) {
-    const { grid, maxY, floorHeight } = state;
+    const { grid, maxY, floorY } = state;
 
     if (grid[toKey(startPosition)]) {
         return null;
@@ -24,7 +24,7 @@ function getFinalSandUnitPosition(state, startPosition) {
             }))
             .find((position) =>
                 !grid[toKey(position)] &&
-                (floorHeight === undefined || position.y < floorHeight)
+                (floorY === undefined || position.y < floorY)
             );
 
         if (!nextPosition) {
@@ -102,7 +102,7 @@ export default function day14() {
     const abyssSandCount = countSand(finalAbyssState);
     console.log(`Answer part 1: ${abyssSandCount}`);
 
-    const initialFloorState = { grid, floorHeight: maxY + 2 };
+    const initialFloorState = { grid, floorY: maxY + 2 };
     const finalFloorState = getFinalState(initialFloorState);
     const floorSandCount = countSand(finalFloorState);
     console.log(`Answer part 2: ${floorSandCount}`);
