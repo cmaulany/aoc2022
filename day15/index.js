@@ -1,24 +1,26 @@
 import { readFileSync } from 'fs';
 
-function mergeRanges(ranges) {
-    if (ranges.length === 1) {
-        return ranges;
-    }
-
-    const merged = ranges.sort((a, b) => a.start - b.start);
-    for (let i = 0; i + 1 < merged.length; i++) {
-        const current = merged[i];
-        const next = merged[i + 1];
-        if (next.start >= current.start && next.start <= current.end) {
-            merged.splice(i, 2, {
-                start: current.start,
-                end: Math.max(next.end, current.end)
-            });
-            i--;
+const mergeRanges = (ranges) => ranges
+    .sort((a, b) => a.start - b.start)
+    .reduce((merged, current) => {
+        if (merged.length === 0) {
+            return [current];
         }
-    }
-    return merged;
-}
+
+        const previous = merged[merged.length - 1];
+
+        if (previous.end < current.start) {
+            return [...merged, current];
+        }
+
+        return [
+            ...merged.slice(0, -1),
+            {
+                start: Math.min(previous.start, current.start),
+                end: Math.max(previous.end, current.end),
+            },
+        ];
+    }, []);
 
 const clampRanges = (ranges, min, max) => ranges
     .filter((range) => range.end >= min && range.start <= max)
