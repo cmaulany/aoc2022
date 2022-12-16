@@ -22,7 +22,7 @@ function getDistances(valves, location) {
 }
 
 function maximizeFlowRate(state) {
-    const { time, valves, location, distanceMap, score } = state;
+    const { time, valves, location, distanceMap, score, path } = state;
 
     const nextStates = Object.entries(valves)
         .filter(([name, valve]) =>
@@ -38,6 +38,7 @@ function maximizeFlowRate(state) {
                 location: name,
                 time: nextTime,
                 score: score + nextValve.flowRate * nextTime,
+                path: [...path, name],
                 valves: {
                     ...valves,
                     [name]: {
@@ -48,27 +49,29 @@ function maximizeFlowRate(state) {
             }
         });
 
-    return Math.max(score, ...nextStates.map(maximizeFlowRate));
+
+    return nextStates
+        .map(maximizeFlowRate)
+        .reduce((max, state) => state.score > max.score ? state : max, state);
+}
+
+const optimals = {};
+
+function cached(state) {
+    const key = Object.keys(state.valves).sort();
+
+    if (optimals[key]) {
+        return optimals[key];
+    }
+
+    const res = maximizeFlowRate(state);
+    optimals[key] = res.score;
+
+    return res.score;
 }
 
 function maximizeFlowRate2(state) {
-    const {
-        valves,
-        locations,
-        times,
-        score,
-        distanceMap,
-    } = state;
-
-    const index = times
-        .map((time, index) => ({ time, index }))
-        .reduce((max, current) => current.time > max.time ? current : max)
-        .index;
-
-    const time = times[index];
-    const location = locations[index];
-
-    // console.log(time, location);
+    const { time, valves, location, distanceMap, score, path } = state;
 
     const nextStates = Object.entries(valves)
         .filter(([name, valve]) =>
@@ -79,11 +82,25 @@ function maximizeFlowRate2(state) {
         .map(([name, nextValve]) => {
             const distance = distanceMap[location][name];
             const nextTime = time - distance - 1;
+            const nextPath = [...path, name];
+
+            const otherState = {
+                ...state,
+                valves: Object.fromEntries(Object.entries(valves).filter(([name]) => !nextPath.includes(name))),
+                location: 'AA',
+                time: 26,
+                path: [],
+                score: 0,
+            }
+            const otherScore = cached(otherState);
+
             return {
                 ...state,
-                locations: locations.map((location, i) => i === index ? name : location),
-                times: times.map((time, i) => i === index ? nextTime : time),
+                location: name,
+                time: nextTime,
                 score: score + nextValve.flowRate * nextTime,
+                otherScore,
+                path: nextPath,
                 valves: {
                     ...valves,
                     [name]: {
@@ -94,14 +111,23 @@ function maximizeFlowRate2(state) {
             }
         });
 
-    return Math.max(score, ...nextStates.map(maximizeFlowRate2));
+    return nextStates
+        .map(maximizeFlowRate2)
+        .reduce((max, state) =>
+            state.score + state.otherScore > max.score + max.otherScore ?
+                state :
+                max,
+            state
+        );
 }
 
 export default function day16() {
     const input = readFileSync('./day16/input.txt', { encoding: 'utf8' });
 
     const valves = input.split('\n').reduce((valves, line) => {
-        const [name, flowRate, connections] = line.match(/Valve (\w\w) has flow rate=(\d+); tunnels? leads? to valves? (.+)/).slice(1);
+        const [name, flowRate, connections] = line
+            .match(/Valve (\w\w) has flow rate=(\d+); tunnels? leads? to valves? (.+)/)
+            .slice(1);
         valves[name] = {
             name,
             flowRate: Number(flowRate),
@@ -114,17 +140,23 @@ export default function day16() {
     const initialState = {
         valves,
         location: 'AA',
-        time: 30,
-        locations: ['AA', 'AA'],
-        times: [26, 26],
+        time: 26,
+        path: [],
+        // locations: ['AA', 'AA'],
+        // times: [26, 26],
         score: 0,
+        otherScore: 0,
         distanceMap: getDistanceMap(valves),
     };
 
-    // console.log(initialState);
+    // const res = cached(initialState);
+    // console.log(res.score);
 
-    // const res = maximizeFlowRate(initialState);
-    // console.log(res);
+    const start = new Date();
+
     const res = maximizeFlowRate2(initialState);
-    console.log(res);
+    console.log(res.score + res.otherScore, res.score, res.otherScore);
+
+    const end = new Date();
+    console.log(end - start);
 }
