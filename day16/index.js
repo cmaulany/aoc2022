@@ -1,40 +1,54 @@
 import { readFileSync } from 'fs';
 
+function getDistanceMap(valves) {
+    const map = {};
+    Object.keys(valves).forEach((location) => map[location] = getDistances(valves, location));
+    return map;
+}
+
+function getDistances(valves, location) {
+    const score = { [location]: 0 };
+    const open = [location];
+    while (open.length > 0) {
+        const location = open.shift()
+        const valve = valves[location];
+
+        const newConnections = valve.connections.filter((connection) => !score.hasOwnProperty(connection));
+
+        newConnections.forEach((connection) => score[connection] = score[location] + 1)
+        open.push(...newConnections);
+    }
+    return score;
+}
+
 function maximizeFlowRate(state) {
-    const { time } = state;
+    const { time, valves, location, distanceMap, score } = state;
 
-    if (time === 0) {
-        return state.score;
-    }
-
-    const valve = state.valves[state.location];
-
-    const nextStates = valve.connections
-        .filter((connection) => state.previousState?.location !== connection)
-        .map((connection) => ({
-            ...state,
-            time: time - 1,
-            location: connection,
-            previousState: state,
-        }));
-
-    if (!valve.isOpen && valve.flowRate > 0) {
-        nextStates.push({
-            ...state,
-            time: time - 1,
-            score: state.score + valve.flowRate * (state.time - 1),
-            valves: {
-                ...state.valves,
-                [state.location]: {
-                    ...valve,
-                    isOpen: true
-                },
-            },
-            previousState: state,
+    const nextStates = Object.entries(valves)
+        .filter(([name, valve]) =>
+            !valve.isOpen &&
+            valve.flowRate > 0 &&
+            time - distanceMap[location][name] - 1 > 0
+        )
+        .map(([name, nextValve]) => {
+            const distance = distanceMap[location][name];
+            const nextTime = time - distance - 1;
+            return {
+                ...state,
+                location: name,
+                time: nextTime,
+                score: score + nextValve.flowRate * nextTime,
+                valves: {
+                    ...valves,
+                    [name]: {
+                        ...nextValve,
+                        isOpen: true
+                    }
+                }
+            }
         });
-    }
 
-    return Math.max(...nextStates.map(maximizeFlowRate));
+    return Math.max(score, ...nextStates.map(maximizeFlowRate));
 }
 
 export default function day16() {
@@ -56,9 +70,11 @@ export default function day16() {
         location: 'AA',
         time: 30,
         score: 0,
+        distanceMap: getDistanceMap(valves),
     };
 
-    const res = maximizeFlowRate(initialState);
+    // console.log(initialState);
 
+    const res = maximizeFlowRate(initialState);
     console.log(res);
 }
