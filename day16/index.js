@@ -51,6 +51,52 @@ function maximizeFlowRate(state) {
     return Math.max(score, ...nextStates.map(maximizeFlowRate));
 }
 
+function maximizeFlowRate2(state) {
+    const {
+        valves,
+        locations,
+        times,
+        score,
+        distanceMap,
+    } = state;
+
+    const index = times
+        .map((time, index) => ({ time, index }))
+        .reduce((max, current) => current.time > max.time ? current : max)
+        .index;
+
+    const time = times[index];
+    const location = locations[index];
+
+    // console.log(time, location);
+
+    const nextStates = Object.entries(valves)
+        .filter(([name, valve]) =>
+            !valve.isOpen &&
+            valve.flowRate > 0 &&
+            time - distanceMap[location][name] - 1 > 0
+        )
+        .map(([name, nextValve]) => {
+            const distance = distanceMap[location][name];
+            const nextTime = time - distance - 1;
+            return {
+                ...state,
+                locations: locations.map((location, i) => i === index ? name : location),
+                times: times.map((time, i) => i === index ? nextTime : time),
+                score: score + nextValve.flowRate * nextTime,
+                valves: {
+                    ...valves,
+                    [name]: {
+                        ...nextValve,
+                        isOpen: true
+                    }
+                }
+            }
+        });
+
+    return Math.max(score, ...nextStates.map(maximizeFlowRate2));
+}
+
 export default function day16() {
     const input = readFileSync('./day16/input.txt', { encoding: 'utf8' });
 
@@ -69,12 +115,16 @@ export default function day16() {
         valves,
         location: 'AA',
         time: 30,
+        locations: ['AA', 'AA'],
+        times: [26, 26],
         score: 0,
         distanceMap: getDistanceMap(valves),
     };
 
     // console.log(initialState);
 
-    const res = maximizeFlowRate(initialState);
+    // const res = maximizeFlowRate(initialState);
+    // console.log(res);
+    const res = maximizeFlowRate2(initialState);
     console.log(res);
 }
