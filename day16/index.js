@@ -1,18 +1,18 @@
 import { readFileSync } from 'fs';
 
 function getDistances(valves, location) {
-    const score = { [location]: 0 };
+    const distances = { [location]: 0 };
     const open = [location];
     while (open.length > 0) {
         const location = open.shift()
         const valve = valves[location];
 
-        const neighbors = valve.connections.filter((connection) => !score.hasOwnProperty(connection));
+        const neighbors = valve.connections.filter((connection) => !distances.hasOwnProperty(connection));
 
-        neighbors.forEach((connection) => score[connection] = score[location] + 1)
+        neighbors.forEach((connection) => distances[connection] = distances[location] + 1)
         open.push(...neighbors);
     }
-    return score;
+    return distances;
 }
 
 function getDistanceMap(valves) {
