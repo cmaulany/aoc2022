@@ -1,13 +1,5 @@
 import { readFileSync } from 'fs';
 
-function getDistanceMap(valves) {
-    const map = {};
-    Object.keys(valves).forEach((location) =>
-        map[location] = getDistances(valves, location)
-    );
-    return map;
-}
-
 function getDistances(valves, location) {
     const score = { [location]: 0 };
     const open = [location];
@@ -23,6 +15,14 @@ function getDistances(valves, location) {
     return score;
 }
 
+function getDistanceMap(valves) {
+    const map = {};
+    Object.keys(valves).forEach((location) =>
+        map[location] = getDistances(valves, location)
+    );
+    return map;
+}
+
 function getFinalStates(state) {
     const {
         time = 30,
@@ -33,26 +33,26 @@ function getFinalStates(state) {
         distanceMap,
     } = state;
 
-    const nextStates = Object.entries(valves)
-        .filter(([name, valve]) =>
+    const nextStates = Object.values(valves)
+        .filter((valve) =>
             !valve.isOpen &&
             valve.flowRate > 0 &&
-            time - distanceMap[location][name] - 1 > 0 &&
-            !path.includes(name)
+            time - distanceMap[location][valve.name] - 1 > 0 &&
+            !path.includes(valve.name)
         )
-        .map(([name, nextValve]) => {
-            const distance = distanceMap[location][name];
+        .map((valve) => {
+            const distance = distanceMap[location][valve.name];
             const nextTime = time - distance - 1;
             return {
                 ...state,
-                location: name,
+                location: valve.name,
                 time: nextTime,
-                score: score + nextValve.flowRate * nextTime,
-                path: [...path, name],
+                score: score + valve.flowRate * nextTime,
+                path: [...path, valve.name],
             }
         });
 
-    return [
+    return nextStates.length === 0 ?
         {
             time,
             valves,
@@ -60,9 +60,8 @@ function getFinalStates(state) {
             score,
             path,
             distanceMap,
-        },
-        ...nextStates.flatMap(getFinalStates),
-    ];
+        } :
+        nextStates.flatMap(getFinalStates);
 }
 
 export default function day16() {
