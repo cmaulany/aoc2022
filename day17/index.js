@@ -35,7 +35,6 @@ function tick(state) {
     } = state;
 
     if (!blockPosition) {
-        // console.log("SPAWN");
         return {
             ...state,
             blockPosition: {
@@ -48,7 +47,7 @@ function tick(state) {
 
     const block = blocks[blockIndex];
     const jetX = jets[jetIndex] === '<' ? -1 : 1;
-    
+
     const nextBlockPosition = action === 'push' ?
         {
             ...blockPosition,
@@ -86,7 +85,7 @@ function tick(state) {
                 }
                 return grid;
             }, grid),
-            { ...grid },
+            grid,
         );
         const nextIndex = (blockIndex + 1) % blocks.length;
         const nextMinY = Math.min(minY, blockPosition.y);
@@ -110,28 +109,39 @@ function tick(state) {
     };
 }
 
-function tickN(state, n) {
-    for (let i = 0; i < n; i++) {
-        state = tick(state);
-    }
-    return state;
-}
-
-function tickTill(state, condition) {
+function tickUntill(state, condition) {
     while (!condition(state)) {
         state = tick(state);
     }
     return state;
 }
 
+const toList = (grid) => Object.entries(grid).reduce((list, [key, value]) => {
+    const [x, y] = key.split(/,-?/);
+    list[y] ??= [];
+    list[y][x] = value
+    return list;
+}, []);
+
+function render(grid) {
+    const list = toList(grid);
+
+    const rows = [];
+    for (let y = list.length - 1; y > 0; y--) {
+        const row = [];
+        for (let x = 0; x < 7; x++) {
+            row[x] = list[y][x] ?? '.';
+        }
+        rows[y] = row;
+    }
+    return rows.map((row) => row.join('')).join('\n');
+}
+
 export default function day17() {
     const input = readFileSync('./day17/input.txt', { encoding: 'utf8' });
 
     const jets = input.split('');
-
     const blocks = blocksInput.split('\n\n').map((blockInput) => blockInput.split('\n').map((line) => line.split('')));
-    console.log(blocks);
-    console.log(input);
 
     const state = {
         width: 7,
@@ -143,7 +153,32 @@ export default function day17() {
         minY: 0,
         rockCount: 0,
     };
-    const end = tickTill(state, (state) => state.rockCount === 2022);
-    console.log(end);
-    // console.log(tickN(state, 12));
+
+    const firstTest = tickUntill(state, (state) => state.rockCount === 2022);
+    console.log(`Answer part 1: ${-firstTest.minY}`);
+
+    const end = tickUntill(firstTest, (state) => {
+        return state.rockCount === 10000;
+    });
+
+    const out = render(end.grid);
+    const repeat = out.replace(/\n/g, '').match(/(.+?)\1+$/);
+
+    const patternHeight = repeat[1].length / 7;
+    const repeatStart = repeat.index / 7;
+
+    const nonRepeatingEnd = tickUntill({ ...state, grid: {} }, (state) => state.minY === -repeatStart);
+    const firstRepeat = tickUntill(nonRepeatingEnd, (state) => state.minY === -repeatStart - patternHeight)
+    const patternRockCount = firstRepeat.rockCount - nonRepeatingEnd.rockCount;
+
+    const desired = 1000000000000
+    const repeatCount = Math.floor((desired - nonRepeatingEnd.rockCount) / patternRockCount);
+
+    const rem = (desired - nonRepeatingEnd.rockCount) % patternRockCount;
+    const final = tickUntill(firstRepeat, (state) => state.rockCount === firstRepeat.rockCount + rem);
+    const extra = -final.minY + firstRepeat.minY;
+
+    const height = -nonRepeatingEnd.minY + repeatCount * patternHeight + extra;
+
+    console.log(`Answer part 2: ${height}`);
 }
