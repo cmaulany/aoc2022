@@ -88,19 +88,19 @@ export default function day16() {
 
     console.log(`Answer part 1: ${maxScore}`);
 
-    const sortedScores = getFinalStates({
+    const sortedFinalStates = getFinalStates({
         valves,
         time: 26,
         distanceMap,
     }).sort((a, b) => b.score - a.score);
 
-    const combinedScores = sortedScores.map((you) => {
-        const elephant = sortedScores.find((state) => state.path.every(
+    const combinedScores = sortedFinalStates.map((you) => {
+        const elephant = sortedFinalStates.find((state) => state.path.every(
             (location) => !you.path.includes(location)
         ));
         return you.score + elephant.score;
     });
-    const bestCombinedScore = Math.max(...combinedScores);
+    const maxCombinedScore = Math.max(...combinedScores);
 
-    console.log(`Answer part 2: ${bestCombinedScore}`);
+    console.log(`Answer part 2: ${maxCombinedScore}`);
 }
