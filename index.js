@@ -14,6 +14,7 @@ import day13 from './day13/index.js';
 import day14 from './day14/index.js';
 import day15 from './day15/index.js';
 import day16 from './day16/index.js';
+import day17 from './day17/index.js';
 
 const dayArg = process.argv[2];
 if (dayArg === undefined) {
@@ -37,6 +38,7 @@ const day = {
     '14': day14,
     '15': day15,
     '16': day16,
+    '17': day17,
 }[dayArg];
 
 if (!day) {
