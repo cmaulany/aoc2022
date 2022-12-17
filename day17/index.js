@@ -20,16 +20,17 @@ const blocksInput = `####
 
 const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
 
-const drawBlock = (grid, block, position) => block.reduce((grid, row, dy) =>
-    row.reduce((grid, symbol, dx) => {
-        if (symbol === '#') {
-            const x = position.x + dx;
-            const y = position.y - dy;
-            grid[`${x},${y}`] = symbol;
-        }
-        return grid;
-    }, grid),
-    grid,
+const drawBlock = (grid, block, position) => block.reduce(
+    (grid, row, dy) => row.reduce(
+        (grid, symbol, dx) => {
+            if (symbol === '#') {
+                grid[`${position.x + dx},${position.y - dy}`] = symbol;
+            }
+            return grid;
+        },
+        grid
+    ),
+    grid
 );
 
 function tick(state) {
@@ -111,9 +112,8 @@ function tickUntill(state, condition) {
     return state;
 }
 
-function findRepeatingPattern(grid) {
-    const ys = Object.keys(grid).map((key) => Number(key.split(',')[1]));
-    const maxY = Math.max(...ys);
+function findRepeatingPattern(state) {
+    const { grid, maxY } = state;
 
     const chars = [];
     for (let y = 0; y < maxY; y++) {
@@ -138,17 +138,22 @@ function findRepeatingPattern(grid) {
 function getHeightWithRockCount(state, rockCount) {
     const after10000RocksState = tickUntill(state, (state) => state.rockCount === 10000);
 
-    const { patternHeight, patternStart } = findRepeatingPattern(after10000RocksState.grid);
+    const { patternHeight, patternStart } = findRepeatingPattern(after10000RocksState);
 
     const nonRepeatingEndState = tickUntill(state, (state) => state.maxY === patternStart);
-    const firstRepeatState = tickUntill(nonRepeatingEndState, (state) => state.maxY === patternStart + patternHeight);
+    const firstRepeatState = tickUntill(
+        nonRepeatingEndState,
+        (state) => state.maxY === patternStart + patternHeight
+    );
     const patternRockCount = firstRepeatState.rockCount - nonRepeatingEndState.rockCount;
 
     const repeatingRockCount = rockCount - nonRepeatingEndState.rockCount;
     const repeatCount = Math.floor(repeatingRockCount / patternRockCount);
     const remainingRockCount = repeatingRockCount % patternRockCount;
 
-    const offsetState = tickUntill(firstRepeatState, (state) => state.rockCount === firstRepeatState.rockCount + remainingRockCount);
+    const offsetState = tickUntill(firstRepeatState, (state) =>
+        state.rockCount === firstRepeatState.rockCount + remainingRockCount
+    );
     const offset = offsetState.maxY - firstRepeatState.maxY;
 
     return nonRepeatingEndState.maxY + repeatCount * patternHeight + offset;
@@ -158,7 +163,9 @@ export default function day17() {
     const input = readFileSync('./day17/input.txt', { encoding: 'utf8' });
 
     const jets = input.split('');
-    const blocks = blocksInput.split('\n\n').map((blockInput) => blockInput.split('\n').map((line) => line.split('')));
+    const blocks = blocksInput.split('\n\n').map(
+        (blockInput) => blockInput.split('\n').map((line) => line.split(''))
+    );
 
     const initialState = { jets, blocks };
 
