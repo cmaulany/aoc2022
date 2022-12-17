@@ -20,6 +20,18 @@ const blocksInput = `####
 
 const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
 
+const drawBlock = (grid, block, position) => block.reduce((grid, row, dy) =>
+    row.reduce((grid, symbol, dx) => {
+        if (symbol === '#') {
+            const x = position.x + dx;
+            const y = position.y - dy;
+            grid[`${x},${y}`] = symbol;
+        }
+        return grid;
+    }, grid),
+    grid,
+);
+
 function tick(state) {
     const {
         blocks,
@@ -74,26 +86,13 @@ function tick(state) {
         };
     }
 
-    if (action === 'fall' && isColliding) {
-        const nextGrid = block.reduce((grid, row, dy) =>
-            row.reduce((grid, symbol, dx) => {
-                if (symbol === '#') {
-                    const x = blockPosition.x + dx;
-                    const y = blockPosition.y - dy;
-                    grid[`${x},${y}`] = symbol;
-                }
-                return grid;
-            }, grid),
-            grid,
-        );
-        const nextIndex = (blockIndex + 1) % blocks.length;
-        const nextMaxY = Math.max(maxY, blockPosition.y);
+    if (isColliding) {
         return {
             ...state,
             action: 'spawn',
-            blockIndex: nextIndex,
-            grid: nextGrid,
-            maxY: nextMaxY,
+            blockIndex: (blockIndex + 1) % blocks.length,
+            grid: drawBlock(grid, block, blockPosition),
+            maxY: Math.max(maxY, blockPosition.y),
             rockCount: rockCount + 1,
         };
     }
@@ -145,8 +144,9 @@ function getHeightWithRockCount(state, rockCount) {
     const firstRepeatState = tickUntill(nonRepeatingEndState, (state) => state.maxY === patternStart + patternHeight);
     const patternRockCount = firstRepeatState.rockCount - nonRepeatingEndState.rockCount;
 
-    const repeatCount = Math.floor((rockCount - nonRepeatingEndState.rockCount) / patternRockCount);
-    const remainingRockCount = (rockCount - nonRepeatingEndState.rockCount) % patternRockCount;
+    const repeatingRockCount = rockCount - nonRepeatingEndState.rockCount;
+    const repeatCount = Math.floor(repeatingRockCount / patternRockCount);
+    const remainingRockCount = repeatingRockCount % patternRockCount;
 
     const offsetState = tickUntill(firstRepeatState, (state) => state.rockCount === firstRepeatState.rockCount + remainingRockCount);
     const offset = offsetState.maxY - firstRepeatState.maxY;
