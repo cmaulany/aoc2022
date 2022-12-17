@@ -23,31 +23,30 @@ const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
 function tick(state) {
     const {
         blocks,
-        blockIndex,
+        blockIndex = 0,
         blockPosition,
-        minY,
-        jetIndex,
+        maxY = 0,
+        jetIndex = 0,
         jets,
-        action,
-        width,
-        grid,
-        rockCount,
+        action = 'spawn',
+        width = 7,
+        grid = {},
+        rockCount = 0,
     } = state;
 
-    if (!blockPosition) {
+    if (action === 'spawn') {
         return {
             ...state,
+            action: 'fall',
             blockPosition: {
                 x: 2,
-                y: minY - 4 - blocks[blockIndex].length
+                y: maxY + 4 + blocks[blockIndex].length
             },
-            action: 'fall',
         };
     }
 
     const block = blocks[blockIndex];
     const jetX = jets[jetIndex] === '<' ? -1 : 1;
-
     const nextBlockPosition = action === 'push' ?
         {
             ...blockPosition,
@@ -55,23 +54,23 @@ function tick(state) {
         } :
         {
             ...blockPosition,
-            y: blockPosition.y + 1,
+            y: blockPosition.y - 1,
         };
 
     const isColliding = block.some((row, dy) =>
         row.some((symbol, dx) => {
             const x = nextBlockPosition.x + dx;
-            const y = nextBlockPosition.y + dy;
-            return y >= 0 || (symbol === '#' && grid[`${x},${y}`]);
+            const y = nextBlockPosition.y - dy;
+            return y <= 0 || (symbol === '#' && grid[`${x},${y}`]);
         })
     );
 
     if (action === 'push') {
         return {
             ...state,
+            action: 'fall',
             blockPosition: isColliding ? blockPosition : nextBlockPosition,
             jetIndex: (jetIndex + 1) % jets.length,
-            action: 'fall',
         };
     }
 
@@ -80,7 +79,7 @@ function tick(state) {
             row.reduce((grid, symbol, dx) => {
                 if (symbol === '#') {
                     const x = blockPosition.x + dx;
-                    const y = blockPosition.y + dy;
+                    const y = blockPosition.y - dy;
                     grid[`${x},${y}`] = symbol;
                 }
                 return grid;
@@ -88,24 +87,21 @@ function tick(state) {
             grid,
         );
         const nextIndex = (blockIndex + 1) % blocks.length;
-        const nextMinY = Math.min(minY, blockPosition.y);
+        const nextMaxY = Math.max(maxY, blockPosition.y);
         return {
             ...state,
-            blockPosition: {
-                x: 2,
-                y: nextMinY - 4 - blocks[nextIndex].length
-            },
+            action: 'spawn',
             blockIndex: nextIndex,
             grid: nextGrid,
-            minY: nextMinY,
+            maxY: nextMaxY,
             rockCount: rockCount + 1,
-        }
+        };
     }
 
     return {
         ...state,
-        blockPosition: nextBlockPosition,
         action: 'push',
+        blockPosition: nextBlockPosition,
     };
 }
 
@@ -116,25 +112,46 @@ function tickUntill(state, condition) {
     return state;
 }
 
-const toList = (grid) => Object.entries(grid).reduce((list, [key, value]) => {
-    const [x, y] = key.split(/,-?/);
-    list[y] ??= [];
-    list[y][x] = value
-    return list;
-}, []);
+function findRepeatingPattern(grid) {
+    const ys = Object.keys(grid).map((key) => Number(key.split(',')[1]));
+    const maxY = Math.max(...ys);
 
-function render(grid) {
-    const list = toList(grid);
-
-    const rows = [];
-    for (let y = list.length - 1; y > 0; y--) {
-        const row = [];
+    const chars = [];
+    for (let y = 0; y < maxY; y++) {
         for (let x = 0; x < 7; x++) {
-            row[x] = list[y][x] ?? '.';
+            chars.push(grid[`${x},${y}`] ?? '.');
         }
-        rows[y] = row;
+    };
+
+    const match = chars.join('').match(/(.+?)\1+$/);
+    if (!match) {
+        return null;
     }
-    return rows.map((row) => row.join('')).join('\n');
+
+    const patternHeight = match[1].length / 7;
+    const patternStart = match.index / 7;
+    return {
+        patternStart,
+        patternHeight,
+    }
+}
+
+function getHeightWithRockCount(state, rockCount) {
+    const after10000RocksState = tickUntill(state, (state) => state.rockCount === 10000);
+
+    const { patternHeight, patternStart } = findRepeatingPattern(after10000RocksState.grid);
+
+    const nonRepeatingEndState = tickUntill(state, (state) => state.maxY === patternStart);
+    const firstRepeat = tickUntill(nonRepeatingEndState, (state) => state.maxY === patternStart + patternHeight);
+    const patternRockCount = firstRepeat.rockCount - nonRepeatingEndState.rockCount;
+
+    const repeatCount = Math.floor((rockCount - nonRepeatingEndState.rockCount) / patternRockCount);
+    const remainingRockCount = (rockCount - nonRepeatingEndState.rockCount) % patternRockCount;
+
+    const offsetState = tickUntill(firstRepeat, (state) => state.rockCount === firstRepeat.rockCount + remainingRockCount);
+    const offset = offsetState.maxY - firstRepeat.maxY;
+
+    return nonRepeatingEndState.maxY + repeatCount * patternHeight + offset;
 }
 
 export default function day17() {
@@ -143,42 +160,11 @@ export default function day17() {
     const jets = input.split('');
     const blocks = blocksInput.split('\n\n').map((blockInput) => blockInput.split('\n').map((line) => line.split('')));
 
-    const state = {
-        width: 7,
-        jets,
-        jetIndex: 0,
-        blocks,
-        blockIndex: 0,
-        grid: {},
-        minY: 0,
-        rockCount: 0,
-    };
+    const initialState = { jets, blocks };
 
-    const firstTest = tickUntill(state, (state) => state.rockCount === 2022);
-    console.log(`Answer part 1: ${-firstTest.minY}`);
+    const after2022RocksState = tickUntill(initialState, (state) => state.rockCount === 2022);
+    console.log(`Answer part 1: ${after2022RocksState.maxY}`);
 
-    const end = tickUntill(firstTest, (state) => {
-        return state.rockCount === 10000;
-    });
-
-    const out = render(end.grid);
-    const repeat = out.replace(/\n/g, '').match(/(.+?)\1+$/);
-
-    const patternHeight = repeat[1].length / 7;
-    const repeatStart = repeat.index / 7;
-
-    const nonRepeatingEnd = tickUntill({ ...state, grid: {} }, (state) => state.minY === -repeatStart);
-    const firstRepeat = tickUntill(nonRepeatingEnd, (state) => state.minY === -repeatStart - patternHeight)
-    const patternRockCount = firstRepeat.rockCount - nonRepeatingEnd.rockCount;
-
-    const desired = 1000000000000
-    const repeatCount = Math.floor((desired - nonRepeatingEnd.rockCount) / patternRockCount);
-
-    const rem = (desired - nonRepeatingEnd.rockCount) % patternRockCount;
-    const final = tickUntill(firstRepeat, (state) => state.rockCount === firstRepeat.rockCount + rem);
-    const extra = -final.minY + firstRepeat.minY;
-
-    const height = -nonRepeatingEnd.minY + repeatCount * patternHeight + extra;
-
-    console.log(`Answer part 2: ${height}`);
+    const finalHeight = getHeightWithRockCount(initialState, 1_000_000_000_000);
+    console.log(`Answer part 2: ${finalHeight}`);
 }
