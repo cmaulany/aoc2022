@@ -9,7 +9,7 @@ function move(state, move) {
     for (let i = 0; i < distance; i++) {
         newRope = moveRope(newRope, direction);
 
-        const tail = newRope[newRope.length - 1];
+        const tail = newRope.at(-1);
         newVisited[`${tail.x},${tail.y}`] = true;
     }
 

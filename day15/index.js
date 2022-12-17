@@ -7,7 +7,7 @@ const mergeRanges = (ranges) => ranges
             return [current];
         }
 
-        const previous = merged[merged.length - 1];
+        const previous = merged.at(-1);
 
         if (previous.end < current.start) {
             return [...merged, current];
