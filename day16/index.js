@@ -35,7 +35,6 @@ function getFinalStates(state) {
 
     const nextStates = Object.values(valves)
         .filter((valve) =>
-            !valve.isOpen &&
             valve.flowRate > 0 &&
             time - distanceMap[location][valve.name] - 1 > 0 &&
             !path.includes(valve.name)
@@ -75,7 +74,6 @@ export default function day16() {
             name,
             flowRate: Number(flowRate),
             connections: connections.split(', '),
-            isOpen: false,
         };
         return valves;
     }, {});
