@@ -33,6 +33,7 @@ function tick(state) {
         grid = {},
         rockCount = 0,
     } = state;
+    const block = blocks[blockIndex];
 
     if (action === 'spawn') {
         return {
@@ -40,12 +41,11 @@ function tick(state) {
             action: 'fall',
             blockPosition: {
                 x: 2,
-                y: maxY + 4 + blocks[blockIndex].length
+                y: maxY + 4 + block.length
             },
         };
     }
 
-    const block = blocks[blockIndex];
     const jetX = jets[jetIndex] === '<' ? -1 : 1;
     const nextBlockPosition = action === 'push' ?
         {
@@ -142,14 +142,14 @@ function getHeightWithRockCount(state, rockCount) {
     const { patternHeight, patternStart } = findRepeatingPattern(after10000RocksState.grid);
 
     const nonRepeatingEndState = tickUntill(state, (state) => state.maxY === patternStart);
-    const firstRepeat = tickUntill(nonRepeatingEndState, (state) => state.maxY === patternStart + patternHeight);
-    const patternRockCount = firstRepeat.rockCount - nonRepeatingEndState.rockCount;
+    const firstRepeatState = tickUntill(nonRepeatingEndState, (state) => state.maxY === patternStart + patternHeight);
+    const patternRockCount = firstRepeatState.rockCount - nonRepeatingEndState.rockCount;
 
     const repeatCount = Math.floor((rockCount - nonRepeatingEndState.rockCount) / patternRockCount);
     const remainingRockCount = (rockCount - nonRepeatingEndState.rockCount) % patternRockCount;
 
-    const offsetState = tickUntill(firstRepeat, (state) => state.rockCount === firstRepeat.rockCount + remainingRockCount);
-    const offset = offsetState.maxY - firstRepeat.maxY;
+    const offsetState = tickUntill(firstRepeatState, (state) => state.rockCount === firstRepeatState.rockCount + remainingRockCount);
+    const offset = offsetState.maxY - firstRepeatState.maxY;
 
     return nonRepeatingEndState.maxY + repeatCount * patternHeight + offset;
 }
