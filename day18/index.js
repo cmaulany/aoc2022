@@ -6,7 +6,7 @@ const getNeighbors = ([x, y, z]) => [
     [x, y - 1, z],
     [x, y + 1, z],
     [x, y, z - 1],
-    [x, y, z + 1]
+    [x, y, z + 1],
 ];
 
 function getOuterMap(isBlocked, min, max) {
@@ -18,10 +18,9 @@ function getOuterMap(isBlocked, min, max) {
         const newNeighbors = getNeighbors(cube).filter((neighbor) =>
             !isOuter.hasOwnProperty(neighbor) &&
             !isBlocked[neighbor] &&
-            neighbor.every(
-                (value, i) =>
-                    value >= min[i] &&
-                    value <= max[i]
+            neighbor.every((value, i) =>
+                value >= min[i] &&
+                value <= max[i]
             )
         );
 
@@ -37,10 +36,11 @@ export default function day18() {
 
     const isLava = lavas.reduce((map, lava) => ({ ...map, [lava]: true }), {});
     const edges = lavas.flatMap(getNeighbors).filter((neighbor) => !isLava[neighbor]);
-    console.log(`Answer part 1: ${edges.length}`)
+    console.log(`Answer part 1: ${edges.length}`);
 
-    const min = edges[0].map((_, i) => Math.min(...edges.map((edge) => edge[i])));
-    const max = edges[0].map((_, i) => Math.max(...edges.map((edge) => edge[i])));
+    const transposed = edges[0].map((_, i) => edges.map((row) => row[i]));
+    const min = transposed.map((values) => Math.min(...values));
+    const max = transposed.map((values) => Math.max(...values));
 
     const isOuter = getOuterMap(isLava, min, max);
     const outerEdges = edges.filter((edge) => isOuter[edge]);
