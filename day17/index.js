@@ -118,17 +118,20 @@ function findRepeatingPattern(state) {
     const chars = [];
     for (let y = 0; y < maxY; y++) {
         for (let x = 0; x < 7; x++) {
-            chars.push(grid[`${x},${y}`] ?? '.');
+            chars.push(grid[`${x},${maxY - y}`] ?? '.');
         }
     };
 
-    const match = chars.join('').match(/(.+?)\1+$/);
-    if (!match) {
+    const match = chars
+        .join('')
+        .match(/^(.+)\1/);
+
+    if (!match || match[1].length < 7 * 1000) {
         return null;
     }
 
     const patternHeight = match[1].length / 7;
-    const patternStart = match.index / 7;
+    const patternStart = maxY - patternHeight * 2;
     return {
         patternStart,
         patternHeight,
