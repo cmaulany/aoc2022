@@ -122,9 +122,7 @@ function findRepeatingPattern(state) {
         }
     };
 
-    const match = chars
-        .join('')
-        .match(/^(.+)\1/);
+    const match = chars.join('').match(/^(.+)\1/);
 
     if (!match || match[1].length < 7 * 1000) {
         return null;
