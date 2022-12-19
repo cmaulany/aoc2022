@@ -24,17 +24,18 @@ function timeUntillBotCanBeBuilt(state, type) {
 function getNextStates(state) {
     const { time, costs, bots, resources } = state;
 
-    const nextStates = types
+    const usefullTypes = types.filter((type) =>
+        type === 'geode' ||
+        Object.values(costs).some((cost) => {
+            return resources[type] < cost[type]
+        })
+    );
+
+    const nextStates = usefullTypes
         .map((type) => [type, timeUntillBotCanBeBuilt(state, type) + 1])
-        .filter(([type, delta]) =>
+        .filter(([_, delta]) =>
             delta !== Infinity &&
-            time - delta > 0 &&
-            (
-                type === 'geode' ||
-                Object.values(costs).some((cost) => {
-                    return bots[type] < cost[type]
-                })
-            )
+            time - delta > 0
         )
         .map(([type, delta]) => ({
             ...state,
@@ -42,51 +43,26 @@ function getNextStates(state) {
                 ...bots,
                 [type]: bots[type] + 1,
             },
-            resources: Object.fromEntries(types.map(
-                (resourceType) => [
-                    resourceType,
-                    resources[resourceType] +
-                    bots[resourceType] * delta -
-                    costs[type][resourceType]
-                ]
-            )),
+            resources: Object.fromEntries(types.map((resourceType) => [
+                resourceType,
+                resources[resourceType] +
+                bots[resourceType] * delta -
+                costs[type][resourceType]
+            ])),
             time: time - delta,
         }));
 
-    if (nextStates.length > 0) {
-        return nextStates;
-    }
-
-    return [{
-        ...state,
-        resources: Object.fromEntries(types.map(
-            (type) => [
-                type,
-                resources[type] +
-                bots[type] * time
-            ]
-        )),
-        time: 0,
-    }];
+    return nextStates;
 }
 
-function dfs(state) {
+function findMaximumGeodes(state) {
     let max = 0;
 
     const open = [state];
-    let i = 0;
     while (open.length > 0) {
-        i++;
         const current = open.pop();
-        if (current.time === 0) {
-            max = Math.max(current.resources.geode + current.bots.geode * current.time, max);
-            continue;
-        }
+        max = Math.max(current.resources.geode + current.bots.geode * current.time, max);
         open.push(...getNextStates(current));
-
-        if ( i > 78738) {
-            // console.log(i);
-        }
     }
 
     return max;
@@ -112,36 +88,27 @@ export default function day19() {
         };
     });
 
-    // 1
-    const obs2 = blueprints.map((blueprint) => {
-        console.log(blueprint.number);
-        const state = {
+    const initialState = {
+        bots: { ore: 1, clay: 0, obsidian: 0, geode: 0 },
+        resources: { ore: 0, clay: 0, obsidian: 0, geode: 0 },
+    };
+
+    const qualityLevels = blueprints.map((blueprint) => {
+        const max = findMaximumGeodes({
+            ...initialState,
             ...blueprint,
             time: 24,
-            bots: { ore: 1, clay: 0, obsidian: 0, geode: 0 },
-            resources: types.reduce((resources, name) => ({ ...resources, [name]: 0 }), {}),
-        };
-        const best = dfs(state);
-        return best * blueprint.number;
+        });
+        return max * blueprint.number;
     });
+    const qualityLevelSum = qualityLevels.reduce((sum, x) => sum + x);
+    console.log(`Answer part 1: ${qualityLevelSum}`);
 
-    const sum2 = obs2.reduce((sum, x) => sum + x);
-    console.log(sum2);
-
-    // 2
-    // const obs = blueprints.slice(0, 3).map((blueprint) => {
-    //     console.log(blueprint.number);
-    //     const state = {
-    //         ...blueprint,
-    //         time: 32,
-    //         bots: { ore: 1, clay: 0, obsidian: 0, geode: 0 },
-    //         resources: types.reduce((resources, name) => ({ ...resources, [name]: 0 }), {}),
-    //     };
-    //     const best = dfs(state);
-    //     return best;
-    // });
-
-    // console.log(obs);
-    // const sum = obs.reduce((sum, x) => sum * x);
-    // console.log(sum);
+    const geodes = blueprints.slice(0, 3).map((blueprint) => findMaximumGeodes({
+        ...initialState,
+        ...blueprint,
+        time: 32,
+    }));
+    const product = geodes.reduce((product, geode) => product * geode);
+    console.log(`Answer part 2: ${product}`);
 }
