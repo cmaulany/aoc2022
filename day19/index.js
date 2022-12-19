@@ -13,7 +13,9 @@ function getNextStates(state) {
             ...state,
             time: 0,
             resources: {
-                ...resources,
+                ore: resources.ore,
+                clay: resources.clay,
+                obsidian: resources.obsidian,
                 geode: resources.geode + extra,
             }
         }];
@@ -21,14 +23,14 @@ function getNextStates(state) {
 
     let nextStates = []
 
-    const robotTypes = types.filter((type) =>
+    const buildableTypes = types.filter((type) =>
         type === 'geode' ||
         Object.values(costs).some((cost) => {
             return bots[type] < cost[type]
         })
     );
 
-    robotTypes.forEach((robotType) => {
+    buildableTypes.forEach((robotType) => {
         const times = types
             .filter((resourceType) => costs[robotType][resourceType] > 0)
             .map((resourceType) => {
@@ -85,24 +87,29 @@ function getNextStates(state) {
 }
 
 function dfs(state) {
+    let resCount = 0;
     let max = 0;
 
-    const seen = {};
+    // const seen = new Map();
     const open = [state];
     while (open.length > 0) {
         const current = open.pop();
-        const key = JSON.stringify([Object.values(current.bots), Object.values(current.resources)]);
+        // const key = JSON.stringify([Object.values(current.bots), Object.values(current.resources)]);
 
-        if (seen[key] >= current.time) {
-            continue;
-        }
+        // if (seen.get(key) >= current.time) {
+        //     continue;
+        // }
 
         if (current.time === 0) {
             max = Math.max(current.resources.geode, max);
+            resCount++;
+            if (resCount % 100000 === 0) {
+                console.log(resCount, max);
+            }
             continue;
         }
 
-        seen[key] = current.time;
+        // seen.set(key, current.time);
 
         const nextStates = getNextStates(current);
 
