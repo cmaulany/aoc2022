@@ -21,14 +21,34 @@ function timeUntillBotCanBeBuilt(state, type) {
     return Math.max(...times);
 }
 
-function getNextStates(state) {
+const toKey = ({ time, costs, bots, resources }) => [
+    time,
+    ...types.flatMap((botType) =>
+        types.flatMap((resourceType) => costs[botType][resourceType])
+    ),
+    ...types.map((type) => bots[type]),
+    ...types.map((type) => resources[type])
+].toString();
+
+function getNextStates(state, cache = {}) {
     const { time, costs, bots, resources } = state;
 
+    const key = toKey(state);
+    if (cache[key]) {
+        return cache[key];
+    }
+
+    const maxSpendRates = Object.fromEntries(types.map((resourceType) => [
+        resourceType,
+        Math.max(
+            ...types.map((robotType) => costs[robotType][resourceType])
+        )
+    ]));
+    maxSpendRates.geode = Infinity;
+
     const usefullTypes = types.filter((type) =>
-        type === 'geode' ||
-        Object.values(costs).some((cost) => {
-            return resources[type] < cost[type]
-        })
+        resources[type] + bots[type] * (time - 1) <=
+        maxSpendRates[type] * (time - 1)
     );
 
     const nextStates = usefullTypes
@@ -45,24 +65,29 @@ function getNextStates(state) {
             },
             resources: Object.fromEntries(types.map((resourceType) => [
                 resourceType,
-                resources[resourceType] +
-                bots[resourceType] * delta -
-                costs[type][resourceType]
+                Math.min(
+                    resources[resourceType] +
+                    bots[resourceType] * delta -
+                    costs[type][resourceType],
+                    maxSpendRates[resourceType] * (time - delta + 1),
+                )
             ])),
             time: time - delta,
         }));
 
+    cache[key] = nextStates;
     return nextStates;
 }
 
-function findMaximumGeodes(state) {
+function findMaximum(state, type) {
     let max = 0;
 
+    const cache = {};
     const open = [state];
     while (open.length > 0) {
         const current = open.pop();
-        max = Math.max(current.resources.geode + current.bots.geode * current.time, max);
-        open.push(...getNextStates(current));
+        max = Math.max(current.resources[type] + current.bots[type] * current.time, max);
+        open.push(...getNextStates(current, cache));
     }
 
     return max;
@@ -94,21 +119,21 @@ export default function day19() {
     };
 
     const qualityLevels = blueprints.map((blueprint) => {
-        const max = findMaximumGeodes({
+        const max = findMaximum({
             ...initialState,
             ...blueprint,
             time: 24,
-        });
+        }, 'geode');
         return max * blueprint.number;
     });
     const qualityLevelSum = qualityLevels.reduce((sum, x) => sum + x);
     console.log(`Answer part 1: ${qualityLevelSum}`);
 
-    const geodes = blueprints.slice(0, 3).map((blueprint) => findMaximumGeodes({
+    const geodes = blueprints.slice(0, 3).map((blueprint) => findMaximum({
         ...initialState,
         ...blueprint,
         time: 32,
-    }));
+    }, 'geode'));
     const product = geodes.reduce((product, geode) => product * geode);
     console.log(`Answer part 2: ${product}`);
 }
