@@ -1,15 +1,22 @@
 import { readFileSync } from 'fs';
-import { type } from 'os';
 
 const types = ['ore', 'clay', 'obsidian', 'geode'];
 
-let cache = {};
-
 function getNextStates(state) {
     const { time, costs, bots, resources } = state;
-    const key = JSON.stringify([Object.values(bots), Object.values(resources)]);
-    if (cache[key] && cache.time >= time) {
-        return [];
+
+    const isDone = types.every((type) => bots[type] >= costs.geode[type]);
+    if (isDone) {
+        const t = time - 1
+        const extra = t * (t + 1) * 0.5;
+        return [{
+            ...state,
+            time: 0,
+            resources: {
+                ...resources,
+                geode: resources.geode + extra,
+            }
+        }];
     }
 
     let nextStates = []
@@ -20,6 +27,7 @@ function getNextStates(state) {
             return bots[type] < cost[type]
         })
     );
+
     robotTypes.forEach((robotType) => {
         const times = types
             .filter((resourceType) => costs[robotType][resourceType] > 0)
@@ -59,39 +67,50 @@ function getNextStates(state) {
         })
     });
 
-    nextStates.push({
-        ...state,
-        resources: Object.fromEntries(types.map(
-            (resourceType) => [
-                resourceType,
-                resources[resourceType] +
-                bots[resourceType] * time
-            ]
-        )),
-        time: 0,
-    });
-
-    cache[key] = { time, result: nextStates };
+    if (nextStates.length === 0) {
+        nextStates.push({
+            ...state,
+            resources: Object.fromEntries(types.map(
+                (resourceType) => [
+                    resourceType,
+                    resources[resourceType] +
+                    bots[resourceType] * time
+                ]
+            )),
+            time: 0,
+        });
+    }
 
     return nextStates;
 }
 
-let cache2 = {};
-function getFinalStates(state) {
-    const { time, costs, bots, resources } = state;
-    const key = JSON.stringify([time, Object.values(bots), Object.values(resources)]);
-    if (cache2[key]) {
-        return cache2[key];
+function dfs(state) {
+    let max = 0;
+
+    const seen = {};
+    const open = [state];
+    while (open.length > 0) {
+        const current = open.pop();
+        const key = JSON.stringify([Object.values(current.bots), Object.values(current.resources)]);
+
+        if (seen[key] >= current.time) {
+            continue;
+        }
+
+        if (current.time === 0) {
+            max = Math.max(current.resources.geode, max);
+            continue;
+        }
+
+        seen[key] = current.time;
+
+        const nextStates = getNextStates(current);
+
+        open.push(...nextStates);
     }
 
-    const nextStates = getNextStates(state);
-
-    const res = nextStates.flatMap((state) => state.time > 0 ? getFinalStates(state) : state);
-    cache2[key] = res;
-
-    return res
+    return max;
 }
-
 
 export default function day19() {
     const input = readFileSync('./day19/input.txt', { encoding: 'utf8' });
@@ -114,22 +133,8 @@ export default function day19() {
         };
     });
 
-    // console.log(state);
-
-    // const nextStates = getNextStates(state);
-    // console.log(JSON.stringify(nextStates, null, 4));
-
-    // const finalStates = getFinalStates(state);
-
-    // const geodes = finalStates.map((state) => state.resources.geode)
-    // const best = geodes.reduce((max, geode) => Math.max(max, geode));
-    // console.log(best);
-
     // 1
     const obs2 = blueprints.map((blueprint) => {
-        cache = {};
-        cache2 = {};
-
         console.log(blueprint.number);
         const state = {
             ...blueprint,
@@ -137,20 +142,15 @@ export default function day19() {
             bots: { ore: 1, clay: 0, obsidian: 0, geode: 0 },
             resources: types.reduce((resources, name) => ({ ...resources, [name]: 0 }), {}),
         };
-        const finalStates = getFinalStates(state);
-        const best = finalStates.map((state) => state.resources.geode).reduce((max, value) => Math.max(max, value));
+        const best = dfs(state);
         return best * blueprint.number;
     });
 
-    // console.log(obs2);
     const sum2 = obs2.reduce((sum, x) => sum + x);
     console.log(sum2);
 
     // 2
     const obs = blueprints.slice(0, 3).map((blueprint) => {
-        cache = {};
-        cache2 = {};
-
         console.log(blueprint.number);
         const state = {
             ...blueprint,
@@ -158,8 +158,7 @@ export default function day19() {
             bots: { ore: 1, clay: 0, obsidian: 0, geode: 0 },
             resources: types.reduce((resources, name) => ({ ...resources, [name]: 0 }), {}),
         };
-        const finalStates = getFinalStates(state);
-        const best = finalStates.map((state) => state.resources.geode).reduce((max, value) => Math.max(max, value));
+        const best = dfs(state);
         return best;
     });
 
