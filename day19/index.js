@@ -2,118 +2,91 @@ import { readFileSync } from 'fs';
 
 const types = ['ore', 'clay', 'obsidian', 'geode'];
 
+function timeUntillBotCanBeBuilt(state, type) {
+    const { costs, bots, resources } = state;
+    const times = types
+        .filter((resourceType) => costs[type][resourceType] > 0)
+        .map((resourceType) => {
+            if (resources[resourceType] >= costs[type][resourceType]) {
+                return 0;
+            }
+            if (bots[resourceType] === 0) {
+                return Infinity;
+            }
+            return Math.ceil(
+                (costs[type][resourceType] - resources[resourceType]) / bots[resourceType]
+            );
+        });
+
+    return Math.max(...times);
+}
+
 function getNextStates(state) {
     const { time, costs, bots, resources } = state;
 
-    const isDone = types.every((type) => bots[type] >= costs.geode[type]);
-    if (isDone) {
-        const t = time - 1
-        const extra = t * (t + 1) * 0.5;
-        return [{
-            ...state,
-            time: 0,
-            resources: {
-                ore: resources.ore,
-                clay: resources.clay,
-                obsidian: resources.obsidian,
-                geode: resources.geode + extra,
-            }
-        }];
-    }
-
-    let nextStates = []
-
-    const buildableTypes = types.filter((type) =>
-        type === 'geode' ||
-        Object.values(costs).some((cost) => {
-            return bots[type] < cost[type]
-        })
-    );
-
-    buildableTypes.forEach((robotType) => {
-        const times = types
-            .filter((resourceType) => costs[robotType][resourceType] > 0)
-            .map((resourceType) => {
-                if (bots[resourceType] === 0) {
-                    return Infinity;
-                }
-                if (resources[resourceType] >= costs[robotType][resourceType]) {
-                    return 0;
-                }
-                return Math.ceil(
-                    (costs[robotType][resourceType] - resources[resourceType]) / bots[resourceType]
-                );
-            });
-
-        const delta = Math.max(...times) + 1;
-
-        if (delta === Infinity || time - delta <= 0) {
-            return;
-        }
-
-        nextStates.push({
+    const nextStates = types
+        .map((type) => [type, timeUntillBotCanBeBuilt(state, type) + 1])
+        .filter(([type, delta]) =>
+            delta !== Infinity &&
+            time - delta > 0 &&
+            (
+                type === 'geode' ||
+                Object.values(costs).some((cost) => {
+                    return bots[type] < cost[type]
+                })
+            )
+        )
+        .map(([type, delta]) => ({
             ...state,
             bots: {
                 ...bots,
-                [robotType]: bots[robotType] + 1,
+                [type]: bots[type] + 1,
             },
             resources: Object.fromEntries(types.map(
                 (resourceType) => [
                     resourceType,
                     resources[resourceType] +
                     bots[resourceType] * delta -
-                    costs[robotType][resourceType]
+                    costs[type][resourceType]
                 ]
             )),
             time: time - delta,
-        })
-    });
+        }));
 
-    if (nextStates.length === 0) {
-        nextStates.push({
-            ...state,
-            resources: Object.fromEntries(types.map(
-                (resourceType) => [
-                    resourceType,
-                    resources[resourceType] +
-                    bots[resourceType] * time
-                ]
-            )),
-            time: 0,
-        });
+    if (nextStates.length > 0) {
+        return nextStates;
     }
 
-    return nextStates;
+    return [{
+        ...state,
+        resources: Object.fromEntries(types.map(
+            (type) => [
+                type,
+                resources[type] +
+                bots[type] * time
+            ]
+        )),
+        time: 0,
+    }];
 }
 
 function dfs(state) {
-    let resCount = 0;
     let max = 0;
 
-    // const seen = new Map();
     const open = [state];
+    let i = 0;
     while (open.length > 0) {
+        i++;
         const current = open.pop();
-        // const key = JSON.stringify([Object.values(current.bots), Object.values(current.resources)]);
-
-        // if (seen.get(key) >= current.time) {
-        //     continue;
-        // }
-
         if (current.time === 0) {
-            max = Math.max(current.resources.geode, max);
-            resCount++;
-            if (resCount % 100000 === 0) {
-                console.log(resCount, max);
-            }
+            max = Math.max(current.resources.geode + current.bots.geode * current.time, max);
             continue;
         }
+        open.push(...getNextStates(current));
 
-        // seen.set(key, current.time);
-
-        const nextStates = getNextStates(current);
-
-        open.push(...nextStates);
+        if ( i > 78738) {
+            // console.log(i);
+        }
     }
 
     return max;
@@ -121,7 +94,6 @@ function dfs(state) {
 
 export default function day19() {
     const input = readFileSync('./day19/input.txt', { encoding: 'utf8' });
-
     const blueprints = input.trim().split(/\n/).map((line) => {
         const parts = line.trim().split(/\.|:/g).map((part) => part.trim()).slice(0, -1);
         const mapped = parts.slice(1).map((part) => {
@@ -157,19 +129,19 @@ export default function day19() {
     console.log(sum2);
 
     // 2
-    const obs = blueprints.slice(0, 3).map((blueprint) => {
-        console.log(blueprint.number);
-        const state = {
-            ...blueprint,
-            time: 32,
-            bots: { ore: 1, clay: 0, obsidian: 0, geode: 0 },
-            resources: types.reduce((resources, name) => ({ ...resources, [name]: 0 }), {}),
-        };
-        const best = dfs(state);
-        return best;
-    });
+    // const obs = blueprints.slice(0, 3).map((blueprint) => {
+    //     console.log(blueprint.number);
+    //     const state = {
+    //         ...blueprint,
+    //         time: 32,
+    //         bots: { ore: 1, clay: 0, obsidian: 0, geode: 0 },
+    //         resources: types.reduce((resources, name) => ({ ...resources, [name]: 0 }), {}),
+    //     };
+    //     const best = dfs(state);
+    //     return best;
+    // });
 
-    console.log(obs);
-    const sum = obs.reduce((sum, x) => sum * x);
-    console.log(sum);
+    // console.log(obs);
+    // const sum = obs.reduce((sum, x) => sum * x);
+    // console.log(sum);
 }
