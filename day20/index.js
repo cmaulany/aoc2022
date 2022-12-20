@@ -1,43 +1,49 @@
 import { readFileSync } from 'fs';
 
-function mix(file) {
-    const og = file.map((n, i) => [n * 811589153, i]);
-    console.log("M", og);
-    let indexed = og;
-    for (let i = 0; i < 10; i++) {
-        indexed = og.reduce((mixedFile, entry) => {
-            const [number, i] = entry;
-            const index = mixedFile.findIndex(([_, j]) => j === i);
+function decrypt(file, key = 1, cycles = 1) {
+    const multiplied = file.map((number) => number * key);
+    let indexed = multiplied.map((number, index) => [number, index]);
 
-            mixedFile.splice(index, 1);
+    let mixed = indexed;
+    for (let cycle = 0; cycle < cycles; cycle++) {
+        mixed = multiplied.reduce((mixed, number, i) => {
+            const index = mixed.findIndex(([_, j]) => i === j);
+            const [entry] = mixed.splice(index, 1);
+
             let nextPosition = index + number;
-            nextPosition %= mixedFile.length;
+            nextPosition %= mixed.length;
             if (nextPosition < 0) {
-                nextPosition += mixedFile.length;
-            } else {
-                nextPosition %= mixedFile.length;
+                nextPosition += mixed.length;
             }
-            mixedFile.splice(nextPosition, 0, entry);
+            mixed.splice(nextPosition, 0, entry);
 
-            return mixedFile;
-        }, indexed.slice());
+            return mixed;
+        }, mixed);
 
     }
-    return indexed.map(([n]) => n);
+
+    return mixed.map(([number]) => number);
 }
 
-function findAns(file) {
-    const zero = file.indexOf(0);
-    const ns = [1000, 2000, 3000].map((n) => (zero + n) % file.length).map((n) => file[n]);
-    const sum = ns.reduce((a, b) => a + b);
-    console.log(ns, sum);
-    return sum;
+function getCoordinates(file) {
+    const zeroIndex = file.indexOf(0);
+    const indexes = [1000, 2000, 3000].map(
+        (offset) => (zeroIndex + offset) % file.length
+    );
+    return indexes.map((index) => file[index]);
 }
 
 export default function day20() {
     const input = readFileSync('./day20/input.txt', { encoding: 'utf8' });
     const file = input.split('\n').map(Number);
-    console.log(file);
-    console.log('mixed', mix(file));
-    console.log(findAns(mix(file)));
+
+    const mixedOnce = decrypt(file);
+    const mixedCoordinates = getCoordinates(mixedOnce);
+    const mixedSum = mixedCoordinates.reduce((a, b) => a + b);
+    console.log(`Answer part 1: ${mixedSum}`);
+
+    const decrypted = decrypt(file, 811589153, 10);
+    const decryptedCoordinates = getCoordinates(decrypted);
+    const decryptedSum = decryptedCoordinates.reduce((a, b) => a + b);
+    console.log(`Answer part 1: ${decryptedSum}`);
 }
