@@ -1,23 +1,29 @@
 import { readFileSync } from 'fs';
 
 function mix(file) {
-    const indexed = file.map((n, i) => [n, i]);
-    const mixed = indexed.reduce((mixedFile, entry) => {
-        const [number, i] = entry;
-        const index = mixedFile.findIndex(([_, j]) => j === i);
+    const og = file.map((n, i) => [n * 811589153, i]);
+    console.log("M", og);
+    let indexed = og;
+    for (let i = 0; i < 10; i++) {
+        indexed = og.reduce((mixedFile, entry) => {
+            const [number, i] = entry;
+            const index = mixedFile.findIndex(([_, j]) => j === i);
 
-        mixedFile.splice(index, 1);
-        let nextPosition = index + number;
-        while (nextPosition < 0) {
-            nextPosition += mixedFile.length;
-        }
-        nextPosition %= mixedFile.length;
-        mixedFile.splice(nextPosition, 0, entry);
+            mixedFile.splice(index, 1);
+            let nextPosition = index + number;
+            nextPosition %= mixedFile.length;
+            if (nextPosition < 0) {
+                nextPosition += mixedFile.length;
+            } else {
+                nextPosition %= mixedFile.length;
+            }
+            mixedFile.splice(nextPosition, 0, entry);
 
-        return mixedFile;
-    }, indexed.slice());
+            return mixedFile;
+        }, indexed.slice());
 
-    return mixed.map(([n]) => n);
+    }
+    return indexed.map(([n]) => n);
 }
 
 function findAns(file) {
