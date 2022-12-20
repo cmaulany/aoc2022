@@ -1,25 +1,20 @@
 import { readFileSync } from 'fs';
 
 function decrypt(file, key = 1, cycles = 1) {
-    const multiplied = file.map((number) => number * key);
-    let indexed = multiplied.map((number, index) => [number, index]);
-
-    let mixed = indexed;
-    for (let cycle = 0; cycle < cycles; cycle++) {
-        mixed = multiplied.reduce((mixed, number, i) => {
+    const mixed = file.map((number, index) => [number * key, index]);
+    for (let n = 0; n < cycles; n++) {
+        mixed.forEach((_, i) => {
             const index = mixed.findIndex(([_, j]) => i === j);
             const [entry] = mixed.splice(index, 1);
 
-            let nextPosition = index + number;
+            let nextPosition = index + entry[0];
             nextPosition %= mixed.length;
             if (nextPosition < 0) {
                 nextPosition += mixed.length;
             }
+
             mixed.splice(nextPosition, 0, entry);
-
-            return mixed;
-        }, mixed);
-
+        });
     }
 
     return mixed.map(([number]) => number);
