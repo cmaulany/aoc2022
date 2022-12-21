@@ -33,20 +33,25 @@ function solve(monkeys, name) {
     }
 
     const parent = monkeys.find((monkey) => monkey.lhs === name || monkey.rhs === name);
+    if (!parent) {
+        return null;
+    }
+
     const { lhs, rhs, operation } = parent;
-    const known = lhs === name ? rhs : lhs;
+    const result = solve(monkeys, parent.name);
+    const known = solve(monkeys, lhs === name ? rhs : lhs);
 
     const op = {
-        '=': (_, known) => solve(monkeys, known),
-        '+': (result, known) => solve(monkeys, result) - solve(monkeys, known),
-        '*': (result, known) => solve(monkeys, result) / solve(monkeys, known),
-        '-': (result, known) => known === rhs ?
-            solve(monkeys, result) + solve(monkeys, known) :
-            solve(monkeys, known) - solve(monkeys, result),
-        '/': (result, known) => solve(monkeys, result) * solve(monkeys, known),
+        '=': (_, known) => known,
+        '+': (result, known) => result - known,
+        '*': (result, known) => result / known,
+        '-': (result, known) => lhs === name ?
+            result + known :
+            known - result,
+        '/': (result, known) => result * known,
     }[operation]
 
-    return op(parent.name, known);
+    return op(result, known);
 }
 
 export default function day21() {
