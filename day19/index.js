@@ -30,13 +30,8 @@ const toKey = ({ time, costs, bots, resources }) => [
     ...types.map((type) => resources[type])
 ].toString();
 
-function getNextStates(state, cache = {}) {
+function getNextStates(state) {
     const { time, costs, bots, resources } = state;
-
-    const key = toKey(state);
-    if (cache[key]) {
-        return cache[key];
-    }
 
     const maxSpendRates = Object.fromEntries(types.map((resourceType) => [
         resourceType,
@@ -75,19 +70,27 @@ function getNextStates(state, cache = {}) {
             time: time - delta,
         }));
 
-    cache[key] = nextStates;
     return nextStates;
 }
 
 function findMaximum(state, type) {
     let max = 0;
 
-    const cache = {};
+    const visitedStates = {};
     const open = [state];
     while (open.length > 0) {
         const current = open.pop();
-        max = Math.max(current.resources[type] + current.bots[type] * current.time, max);
-        open.push(...getNextStates(current, cache));
+
+        const key = toKey(current);
+        if (visitedStates[key]) {
+            continue;
+        }
+        visitedStates[key] = true;
+
+        const { resources, bots, time } = current;
+        max = Math.max(max, resources[type] + bots[type] * time);
+
+        open.push(...getNextStates(current));
     }
 
     return max;
