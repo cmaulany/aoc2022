@@ -3,8 +3,16 @@ import { readFileSync } from 'fs';
 function evaluate(monkeys, name) {
     const monkey = monkeys.find((monkey) => monkey.name === name);
     const { value, lhs, rhs, operation } = monkey;
-    if (value !== undefined) {
-        return value;
+
+    if (!operation) {
+        return value ?? null;
+    }
+
+    const lhsValue = evaluate(monkeys, lhs);
+    const rhsValue = evaluate(monkeys, rhs);
+
+    if (lhsValue === null || rhsValue === null) {
+        return null;
     }
 
     const op = {
@@ -14,42 +22,34 @@ function evaluate(monkeys, name) {
         '/': (a, b) => a / b,
     }[operation];
 
-    return op(evaluate(monkeys, lhs), evaluate(monkeys, rhs));
+    return op(lhsValue, rhsValue);
 }
 
 function solve(monkeys, name, value) {
+    if (name === 'humn') {
+        return value;
+    }
+
     const monkey = monkeys.find((monkey) => monkey.name === name);
     const { lhs, rhs, operation } = monkey;
 
-    let lhsValue;
-    try {
-        lhsValue = evaluate(monkeys, lhs);
-    } catch (e) { }
+    const lhsValue = evaluate(monkeys, lhs);
+    const rhsValue = evaluate(monkeys, rhs);
 
-    let rhsValue;
-    try {
-        rhsValue = evaluate(monkeys, rhs);
-    } catch (e) { }
-
-    if (name === 'humn') {
-        console.log(monkey, value);
-        return;
-    }
-
-    if (lhsValue === undefined) {
+    if (lhsValue === null) {
         const op = {
-            '=': (result, b) => b,
+            '=': (_, b) => b,
             '+': (result, b) => result - b,
-            '*': (result, b) => Math.round(result / b),
+            '*': (result, b) => result / b,
             '-': (result, b) => result + b,
             '/': (result, b) => result * b,
         }[operation]
         return solve(monkeys, lhs, op(value, rhsValue));
     } else {
         const op = {
-            '=': (result, b) => b,
+            '=': (_, a) => a,
             '+': (result, a) => result - a,
-            '*': (result, a) => Math.round(result / a),
+            '*': (result, a) => result / a,
             '-': (result, a) => a - result,
             '/': (result, a) => result * a,
         }[operation]
@@ -75,31 +75,18 @@ export default function day21() {
         }
     });
 
-    // console.log(monkeys);
-    // console.log(evaluate(monkeys, 'root'));
+    const evaluatedRoot = evaluate(monkeys, 'root');
+    console.log(`Answer part 1: ${evaluatedRoot}`);
 
     monkeys.forEach((monkey) => {
-        if (monkey.name === 'humn') {
-            delete monkey.value;
-        }
         if (monkey.name === 'root') {
             monkey.operation = '=';
         }
-    });
-
-
-    console.log(solve(monkeys, 'root'));
-
-    const test = 3769668716709
-
-    monkeys.forEach((monkey) => {
         if (monkey.name === 'humn') {
-            monkey.value = test;
-        }
-        if (monkey.name === 'root') {
-            monkey.operation = '-';
+            delete monkey.value;
         }
     });
 
-    console.log("T", evaluate(monkeys, 'root'));
+    const solvedHumn = solve(monkeys, 'root');
+    console.log(`Answer part 2: ${solvedHumn}`);
 }
