@@ -70,15 +70,16 @@ export default function day21() {
     const evaluatedRoot = evaluate(monkeys, 'root');
     console.log(`Answer part 1: ${evaluatedRoot}`);
 
-    monkeys.forEach((monkey) => {
+    const fixedMonkeys = monkeys.map((monkey) => {
         if (monkey.name === 'root') {
-            monkey.operation = '=';
+            return { ...monkey, operation: '=' };
         }
         if (monkey.name === 'humn') {
-            delete monkey.value;
+            return { ...monkey, value: undefined };
         }
+        return monkey;
     });
 
-    const solvedHumn = solve(monkeys, 'humn');
+    const solvedHumn = solve(fixedMonkeys, 'humn');
     console.log(`Answer part 2: ${solvedHumn}`);
 }
