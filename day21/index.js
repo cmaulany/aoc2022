@@ -16,6 +16,7 @@ function evaluate(monkeys, name) {
     }
 
     const op = {
+        '=': (a, b) => a === b,
         '+': (a, b) => a + b,
         '*': (a, b) => a * b,
         '-': (a, b) => a - b,
@@ -25,35 +26,32 @@ function evaluate(monkeys, name) {
     return op(lhsValue, rhsValue);
 }
 
-function solve(monkeys, name, value) {
-    if (name === 'humn') {
+function solve(monkeys, name) {
+    const value = evaluate(monkeys, name);
+    if (value !== null) {
         return value;
     }
 
-    const monkey = monkeys.find((monkey) => monkey.name === name);
-    const { lhs, rhs, operation } = monkey;
-
-    const lhsValue = evaluate(monkeys, lhs);
-    const rhsValue = evaluate(monkeys, rhs);
-
-    if (lhsValue === null) {
+    const parent = monkeys.find((monkey) => monkey.lhs === name || monkey.rhs === name);
+    const { lhs, rhs, operation } = parent;
+    if (lhs === name) {
         const op = {
-            '=': (_, b) => b,
-            '+': (result, b) => result - b,
-            '*': (result, b) => result / b,
-            '-': (result, b) => result + b,
-            '/': (result, b) => result * b,
+            '=': (_, b) => solve(monkeys, b),
+            '+': (result, b) => solve(monkeys, result) - solve(monkeys, b),
+            '*': (result, b) => solve(monkeys, result) / solve(monkeys, b),
+            '-': (result, b) => solve(monkeys, result) + solve(monkeys, b),
+            '/': (result, b) => solve(monkeys, result) * solve(monkeys, b),
         }[operation]
-        return solve(monkeys, lhs, op(value, rhsValue));
+        return op(parent.name, rhs);
     } else {
         const op = {
-            '=': (_, a) => a,
-            '+': (result, a) => result - a,
-            '*': (result, a) => result / a,
-            '-': (result, a) => a - result,
-            '/': (result, a) => result * a,
+            '=': (_, a) => solve(monkeys, a),
+            '+': (result, a) => solve(monkeys, result) - solve(monkeys, a),
+            '*': (result, a) => solve(monkeys, result) / solve(monkeys, a),
+            '-': (result, a) => solve(monkeys, a) - solve(monkeys, result),
+            '/': (result, a) => solve(monkeys, result) * solve(monkeys, a),
         }[operation]
-        return solve(monkeys, rhs, op(value, lhsValue));
+        return op(parent.name, lhs);
     }
 }
 
@@ -87,6 +85,6 @@ export default function day21() {
         }
     });
 
-    const solvedHumn = solve(monkeys, 'root');
+    const solvedHumn = solve(monkeys, 'humn');
     console.log(`Answer part 2: ${solvedHumn}`);
 }
