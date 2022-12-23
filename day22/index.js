@@ -133,19 +133,6 @@ function toDir([x, y]) {
     }
 }
 
-function rotatePlane(plane, rotation = 1) {
-    rotation = mode(rotation, 4);
-    if (rotation === 0) {
-        return plane;
-    }
-    const sides = ['right', 'bottom', 'left', 'top'];
-    const newPlane = { ...plane };
-    for (let i = 0; i < sides; i++) {
-        newPlane[sides[i]] = plane[sides[mod(i + 3, 4)]];
-    }
-    return rotatePlane(newPlane, rotation - 1);
-}
-
 function rotateSide(side, rotation = 1) {
     const sides = ['right', 'bottom', 'left', 'top'];
     const index = sides.indexOf(side);
@@ -229,7 +216,7 @@ function toCube(map) {
                     aPlane[aSide] = [
                         plane[b][0],
                         plane[b][1],
-                        mod(-1 * plane[a][2] + -1 * plane[b][2] + 1, 4)
+                        mod(-plane[a][2] - plane[b][2] + 1, 4)
                     ];
                 }
                 const bSide = rotateSide(a, plane[b][2]);
@@ -237,7 +224,7 @@ function toCube(map) {
                     bPlane[bSide] = [
                         plane[a][0],
                         plane[a][1],
-                        mod(1 * plane[a][2] + 1 * plane[b][2] + 3, 4)
+                        mod(plane[a][2] + plane[b][2] + 3, 4)
                     ];
                 }
             });
@@ -245,53 +232,6 @@ function toCube(map) {
     }
 
     return planes;
-}
-
-function project(map) {
-    const get = (position) => {
-        const x = Math.floor(position[0] / size);
-        const y = Math.floor(position[1] / size);
-        const z = Math.floor(position[1] / size);
-        return projections.find(([px, py]) => px === x && py === y);
-    };
-
-    const tileCount = map.flat().filter((cell) => cell !== ' ').length;
-    const size = Math.sqrt(tileCount / 6);
-
-    const startX = map[0].findIndex((cell) => cell !== ' ') / size;
-    const initialPosition = [startX, 0, 0];
-
-    let index = 0;
-    const open = [
-        {
-            index,
-            position: initialPosition,
-            rotation: [1, 0, 0]
-        }
-    ];
-    const projections = [];
-    while (open.length > 0) {
-        const proj = projection.pop();
-        const [x, y, z] = proj.rotatation;
-        projections.push(proj);
-        const neighbors = [
-            [[1, 0], [0, 0, x]],
-            [[0, 1], [0, -x, 0]],
-            [[-1, 0], []],
-            [0, -1],
-        ].filter(([dx, dy]) =>
-            map[y + dy][x + dx] &&
-            map[y + dy][x + dx] !== ' '
-        ).map(([x, y]) => [0, 0, x]);
-
-        neighbors.forEach(([x, y]) => {
-            const n = [x, y, 1]
-            rotations
-            // add(neighbor, position);
-        });
-    }
-    // start at start, walk to neighbors, add a rotation for each side;
-
 }
 
 export default function day22() {
@@ -306,62 +246,58 @@ export default function day22() {
     });
 
     const test = toCube(map);
-    console.log(JSON.stringify(test, null, 4));
-    return;
 
 
 
 
     const tileCount = map.flat().filter((cell) => cell !== ' ').length;
     const size = Math.sqrt(tileCount / 6);
+    const xOffset = map[0].findIndex((cell) => cell !== ' ') / size;
 
-    const planes = [];
-    const width = Math.max(...map.map((row) => row.length));
-    for (let y = 0; y < map.length; y += size) {
-        for (let x = 0; x < width; x += size) {
-            const v = map[y]?.[x];
-            if (v && v !== ' ') {
-                planes.push([x, y]);
-            }
+    function nextCubePosition(cubeMap, size, position, direction) {
+        const [x, y] = position;
+        const cube = [Math.floor(x / size) - xOffset, Math.floor(y / size)];
+
+        const relativeX = mod(x, size) + direction[0];
+        const relativeY = mod(y, size) + direction[1];
+
+        if (relativeX >= 0 && relativeX < size && relativeY >= 0 && relativeY < size) {
+            return [[x + direction[0], y + direction[1]], direction];
         }
-    }
-    console.log(planes);
 
-    function nextCubePosition(planes, size, position, direction) {
-        const [x, y, z] = position;
-        const cube = [Math.floor(x / size), Math.floor(y / size)];
+        console.log("jump");
+        const map = cubeMap.find((map) => map.position[0] === cube[0] && map.position[1] === cube[1]);
+        console.log(cubeMap, cube, position);
 
-        const wrappedX = mod(x, size);
-        const wrappedY = mod(y, size);
-        const newX = wrappedX + direction[0];
-        const newY = wrappedY + direction[1];
+        const [nextCubeX, nextCubeY, r] = map[toDir(direction)];
 
-        if (newX < 0 || newY < 0 || newX >= size || newY >= size) {
-            console.log("jump");
-            const map = cubeMap[cube];
+        const clampedSize = size - 1;
+        let rotated = [
+            relativeX - clampedSize / 2,
+            relativeY - clampedSize / 2,
+        ];
+        rotated = rotate(rotated, 'R', r);
+        rotated = [
+            mod(rotated[0] + clampedSize / 2, size),
+            mod(rotated[1] + clampedSize / 2, size),
+        ];
 
-            const [nextCubeX, nextCubeY, r] = map[toDir(direction)];
-
-            let p = [wrappedX + direction[0], wrappedY + direction[1]];
-            console.log("P", p);
-            p = [p[0] - (size - 1) / 2, p[1] - (size - 1) / 2];
-            direction = rotate(direction, 'R', r);
-            p = rotate(p, 'R', r);
-            p = [p[0] + (size - 1) / 2, p[1] + (size - 1) / 2];
-
-            p = [mod(p[0], size), mod(p[1], size)];
-            p = [p[0] + nextCubeX * size, p[1] + nextCubeY * size];
-
-            return [p, direction];
-        }
-        return [[cube[0] * size + newX, cube[1] * size + newY], direction];
+        const nextPosition = [rotated[0] + (nextCubeX + xOffset) * size, rotated[1] + nextCubeY * size];
+        return [nextPosition, rotate(direction, 'R', r)];
     }
 
     const startX = map[0].findIndex((cell) => cell !== ' ');
     const initialPosition = [startX, 0, 0];
     const initialDirection = [1, 0, 0];
 
-    const next = nextCubePosition(planes, size, initialPosition, [-1, 0, 0]);
+    // const cubeMap = test.reduce((cubeMap, plane) => ({
+    //     ...cubeMap,
+    //     [plane.position.slice(0, 2)]: plane
+    // }), {});
+    // console.log(cubeMap);
+    // return;
+
+    const next = nextCubePosition(test, size, initialPosition, [-1, 0, 0]);
     console.log("Next", size, next);
     // return;
 
@@ -380,7 +316,7 @@ export default function day22() {
 
     const [finalPosition, finalDirection] = path.reduce(([position, direction], step) => {
         for (let i = 0; i < step.count; i++) {
-            const [nextPosition, nextDirection] = getNextPosition(planes, size, position, direction);
+            const [nextPosition, nextDirection] = nextCubePosition(test, size, position, direction);
             if (map[nextPosition[1]]?.[nextPosition[0]] !== '#') {
                 position = nextPosition;
                 direction = nextDirection;
