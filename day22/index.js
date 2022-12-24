@@ -27,7 +27,6 @@ function getNextFlatPosition(map, position, direction) {
     return [x, y];
 }
 
-
 function toEdgeName([x, y]) {
     if (x === 1) {
         return 'right';
