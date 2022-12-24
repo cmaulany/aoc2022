@@ -5,6 +5,14 @@ function mod(value, modulo) {
     return rem < 0 ? rem + modulo : rem;
 }
 
+function rotate(direction, times = 1) {
+    for (let i = 0; i < mod(times, 4); i++) {
+        const [x, y] = direction;
+        direction = [y !== 0 ? -y : 0, x];
+    }
+    return direction;
+}
+
 function getNextFlatPosition(map, position, direction) {
     let [x, y] = position;
     do {
@@ -19,13 +27,6 @@ function getNextFlatPosition(map, position, direction) {
     return [x, y];
 }
 
-function rotate(direction, times = 1) {
-    for (let i = 0; i < mod(times, 4); i++) {
-        const [x, y] = direction;
-        direction = [-y, x];
-    }
-    return direction;
-}
 
 function toEdgeName([x, y]) {
     if (x === 1) {
@@ -119,11 +120,12 @@ function toCube(map) {
                     p.position[1] === plane[b]?.[1]
                 )
                 const aSide = rotateSide(b, plane[a][2]);
+                const rotation = -plane[a][2] + plane[b][2] + 1;
                 if (!aPlane[aSide]) {
                     aPlane[aSide] = [
                         plane[b][0],
                         plane[b][1],
-                        mod(-plane[a][2] - plane[b][2] + 1, 4)
+                        mod(rotation, 4)
                     ];
                 }
                 const bSide = rotateSide(a, plane[b][2]);
@@ -131,7 +133,7 @@ function toCube(map) {
                     bPlane[bSide] = [
                         plane[a][0],
                         plane[a][1],
-                        mod(plane[a][2] + plane[b][2] - 1, 4)
+                        mod(-rotation, 4)
                     ];
                 }
             });
@@ -143,7 +145,8 @@ function toCube(map) {
 
 function getNextCubePosition(cubeMap, size, position, direction) {
     const [x, y] = position;
-    const cube = [Math.floor(x / size), Math.floor(y / size)];
+    const cubeX = Math.floor(x / size);
+    const cubeY = Math.floor(y / size);
 
     const relativeX = mod(x, size) + direction[0];
     const relativeY = mod(y, size) + direction[1];
@@ -153,10 +156,9 @@ function getNextCubePosition(cubeMap, size, position, direction) {
     }
 
     const plane = cubeMap.find((map) =>
-        map.position[0] === cube[0] &&
-        map.position[1] === cube[1]
+        map.position[0] === cubeX &&
+        map.position[1] === cubeY
     );
-
     const [nextCubeX, nextCubeY, r] = plane[toEdgeName(direction)];
 
     const rotationOffset = (size - 1) / 2;
@@ -230,7 +232,6 @@ export default function day22() {
     const answerPart1 = getScore(flatFinalPosition, flatFinalDirection);
     console.log(`Answer part 1: ${answerPart1}`);
 
-
     const [finalCubePosition, finalCubeDirection] = path.reduce(([position, direction], step) => {
         for (let i = 0; i < step.count; i++) {
             const [nextPosition, nextDirection] = getNextCubePosition(cube, size, position, direction);
@@ -245,6 +246,7 @@ export default function day22() {
             rotate(direction, rotation),
         ]
     }, [initialPosition, initialDirection]);
+
     const answerPart2 = getScore(finalCubePosition, finalCubeDirection)
     console.log(`Answer part 2: ${answerPart2}`);
 }
