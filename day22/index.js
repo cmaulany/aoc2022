@@ -5,7 +5,7 @@ function mod(value, modulo) {
     return rem < 0 ? rem + modulo : rem;
 }
 
-function getNextPosition(map, position, direction) {
+function getNextFlatPosition(map, position, direction) {
     let [x, y] = position;
     do {
         if (direction[0] !== 0) {
@@ -27,7 +27,7 @@ function rotate(direction, times = 1) {
     return direction;
 }
 
-function toDir([x, y]) {
+function toEdgeName([x, y]) {
     if (x === 1) {
         return 'right';
     }
@@ -141,7 +141,7 @@ function toCube(map) {
     return planes;
 }
 
-function nextCubePosition(cubeMap, size, position, direction) {
+function getNextCubePosition(cubeMap, size, position, direction) {
     const [x, y] = position;
     const cube = [Math.floor(x / size), Math.floor(y / size)];
 
@@ -152,9 +152,12 @@ function nextCubePosition(cubeMap, size, position, direction) {
         return [[x + direction[0], y + direction[1]], direction];
     }
 
-    const plane = cubeMap.find((map) => map.position[0] === cube[0] && map.position[1] === cube[1]);
+    const plane = cubeMap.find((map) =>
+        map.position[0] === cube[0] &&
+        map.position[1] === cube[1]
+    );
 
-    const [nextCubeX, nextCubeY, r] = plane[toDir(direction)];
+    const [nextCubeX, nextCubeY, r] = plane[toEdgeName(direction)];
 
     const rotationOffset = (size - 1) / 2;
     let rotated = [
@@ -186,8 +189,13 @@ function getFacingScore([x, y]) {
     }
 };
 
+const getScore = (position, direction) =>
+    1000 * (position[1] + 1) +
+    4 * (position[0] + 1) +
+    getFacingScore(direction);
+
+const input = readFileSync('./day22/input.txt', { encoding: 'utf8' });
 export default function day22() {
-    const input = readFileSync('./day22/input.txt', { encoding: 'utf8' });
 
     const [mapInput, pathInput] = input.replace(/\r/g, '').split('\n\n');
     const map = mapInput.split('\n').map((line) => line.split(''));
@@ -207,30 +215,36 @@ export default function day22() {
 
     const [flatFinalPosition, flatFinalDirection] = path.reduce(([position, direction], step) => {
         for (let i = 0; i < step.count; i++) {
-            const nextPosition = getNextPosition(map, position, direction);
+            const nextPosition = getNextFlatPosition(map, position, direction);
             if (map[nextPosition[1]]?.[nextPosition[0]] !== '#') {
                 position = nextPosition;
             }
         }
-        return [position, step.rotation ? rotate(direction, step.rotation === 'R' ? 1 : -1) : direction]
+        const rotation = step.rotation === 'R' ? 1 : step.rotation === 'L' ? -1 : 0;
+        return [
+            position,
+            rotate(direction, rotation),
+        ]
     }, [initialPosition, initialDirection]);
 
-    const flatFacingScore = getFacingScore(flatFinalDirection);
-    const answerPart1 = 1000 * (flatFinalPosition[1] + 1) + 4 * (flatFinalPosition[0] + 1) + flatFacingScore;
-    console.log(answerPart1);
+    const answerPart1 = getScore(flatFinalPosition, flatFinalDirection);
+    console.log(`Answer part 1: ${answerPart1}`);
 
 
-    const [finalPosition, finalDirection] = path.reduce(([position, direction], step) => {
+    const [finalCubePosition, finalCubeDirection] = path.reduce(([position, direction], step) => {
         for (let i = 0; i < step.count; i++) {
-            const [nextPosition, nextDirection] = nextCubePosition(cube, size, position, direction);
+            const [nextPosition, nextDirection] = getNextCubePosition(cube, size, position, direction);
             if (map[nextPosition[1]]?.[nextPosition[0]] !== '#') {
                 position = nextPosition;
                 direction = nextDirection;
             }
         }
-        return [position, step.rotation ? rotate(direction, step.rotation === 'R' ? 1 : -1) : direction]
+        const rotation = step.rotation === 'R' ? 1 : step.rotation === 'L' ? -1 : 0;
+        return [
+            position,
+            rotate(direction, rotation),
+        ]
     }, [initialPosition, initialDirection]);
-    const facingScore = getFacingScore(finalDirection);
-    const ans = 1000 * (finalPosition[1] + 1) + 4 * (finalPosition[0] + 1) + facingScore;
-    console.log(ans);
+    const answerPart2 = getScore(finalCubePosition, finalCubeDirection)
+    console.log(`Answer part 2: ${answerPart2}`);
 }
