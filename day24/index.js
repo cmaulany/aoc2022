@@ -7,36 +7,6 @@ function mod(value, modulo) {
     return rem < 0 ? rem + modulo : rem;
 }
 
-const deltas = {
-    '>': { x: 1, y: 0 },
-    'v': { x: 0, y: 1 },
-    '<': { x: -1, y: 0 },
-    '^': { x: 0, y: -1 },
-};
-
-const moveBlizzards = (blizzards, width, height, t = 1) => blizzards.map((blizzard) => {
-    const { x, y, char } = blizzard;
-    const delta = deltas[char];
-    return {
-        ...blizzard,
-        x: mod(x + delta.x * t - 1, width - 2) + 1,
-        y: mod(y + delta.y * t - 1, height - 2) + 1,
-    };
-});
-
-const cache = {};
-const getBlizzardMap = (blizzards, width, height, t) => {
-    if (cache[t]) {
-        return cache[t];
-    }
-
-    const nextBlizzards = moveBlizzards(blizzards, width, height, t);
-    const blizzardMap = {};
-    nextBlizzards.forEach((blizzard) => blizzardMap[toKey(blizzard)] = blizzard);
-    cache[t] = blizzardMap;
-    return blizzardMap;
-}
-
 const getNeighbors = ({ x, y }) => [
     { x: x + 1, y },
     { x, y: y + 1 },
@@ -44,9 +14,37 @@ const getNeighbors = ({ x, y }) => [
     { x, y: y - 1 },
 ];
 
-function getTime(state, end) {
+const moveBlizzards = (blizzards, width, height, t) => blizzards.map((blizzard) => {
+    const { x, y, char } = blizzard;
+    const delta = {
+        '>': { x: 1, y: 0 },
+        'v': { x: 0, y: 1 },
+        '<': { x: -1, y: 0 },
+        '^': { x: 0, y: -1 },
+    }[char];
+    return {
+        ...blizzard,
+        x: mod(x + delta.x * t - 1, width - 2) + 1,
+        y: mod(y + delta.y * t - 1, height - 2) + 1,
+    };
+});
+
+function getBlizzardMap(blizzards, width, height, time, cache = {}) {
+    if (cache[time]) {
+        return cache[time];
+    }
+
+    const nextBlizzards = moveBlizzards(blizzards, width, height, time);
+    const blizzardMap = {};
+    nextBlizzards.forEach((blizzard) => blizzardMap[toKey(blizzard)] = blizzard);
+    cache[time] = blizzardMap;
+    return blizzardMap;
+}
+
+function getMinTime(state, end) {
     const open = [state];
     const visited = {};
+    const cache = {};
     while (open.length > 0) {
         const current = open.shift();
         const { map, blizzards, position, time, width, height } = current;
@@ -61,9 +59,9 @@ function getTime(state, end) {
             return time;
         }
 
-        const blizzardMap = getBlizzardMap(blizzards, width, height, time + 1);
+        const blizzardMap = getBlizzardMap(blizzards, width, height, time + 1, cache);
 
-        const neighbors = getNeighbors(position).filter(({ x, y }) =>
+        const nextPositions = getNeighbors(position).filter(({ x, y }) =>
             x >= 0 && x < width &&
             y >= 0 && y < height &&
             map[y][x] !== '#' &&
@@ -71,10 +69,10 @@ function getTime(state, end) {
         );
 
         if (!blizzardMap[toKey(position)]) {
-            neighbors.push(position);
+            nextPositions.push(position);
         }
 
-        open.push(...neighbors.map((neighbor) => ({
+        open.push(...nextPositions.map((neighbor) => ({
             ...current,
             time: time + 1,
             position: neighbor,
@@ -82,12 +80,17 @@ function getTime(state, end) {
     }
 }
 
+function getMinPathTime(state, path) {
+    path.forEach((node) => {
+        const time = getMinTime(state, node);
+        state = { ...state, position: node, time };
+    });
+    return state.time;
+}
 
 export default function day24() {
     const input = readFileSync('./day24/input.txt', { encoding: 'utf8' });
-
     const map = input.split('\n').map((line) => line.split(''));
-
     const blizzards = input.split('\n')
         .flatMap((line, y) => line.split('').map((char, x) => ({ x, y, char })))
         .filter(({ char }) => ['>', 'v', '<', '^'].includes(char));
@@ -95,37 +98,21 @@ export default function day24() {
     const width = map[0].length;
     const height = map.length;
 
+    const start = { x: 1, y: 0 };
+    const end = { x: width - 2, y: height - 1 };
+
     const state = {
         map,
         blizzards,
         width,
         height,
         time: 0,
-        position: { x: 1, y: 0 }
+        position: start,
     };
 
-    const res = getTime(state, { x: width - 2, y: height - 1 });
-    console.log(res);
+    const timeToEnd = getMinTime(state, end);
+    console.log(`Answer part 1: ${timeToEnd}`);
 
-    const state2 = {
-        map,
-        blizzards,
-        width,
-        height,
-        time: res,
-        position: { x: width - 2, y: height - 1 }
-    }
-    const res2 = getTime(state2, { x: 1, y: 0 });
-    console.log(res2);
-
-    const state3 = {
-        map,
-        blizzards,
-        width,
-        height,
-        time: res2,
-        position: { x: 1, y: 0 }
-    }
-    const res3 = getTime(state3, { x: width - 2, y: height - 1 });
-    console.log(res3);
+    const timeRoundTrip = getMinPathTime(state, [end, start, end]);
+    console.log(`Answer part 2: ${timeRoundTrip}`);
 }
